@@ -92,10 +92,15 @@ source .venv/bin/activate
 pip install -r requirements-api.txt
 ```
 
+Install FFmpeg for audio-enabled runs: `brew install ffmpeg` on macOS or
+`sudo apt-get install ffmpeg` on Ubuntu. Put `ffmpeg` on PATH, or set
+`FFMPEG_BINARY` to its executable path.
+
 #### 2. Prepare the data
 
-Download the metadata and media shards into `/path/to/download`.
-The public download link will be added before release.
+Download the metadata and media shards from
+[Hugging Face](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass)
+into `/path/to/download`.
 Extract into a new directory and verify the files:
 
 ```bash
@@ -105,8 +110,8 @@ export DATA_ROOT=/path/to/OmniCompass
 ```
 
 The extracted directory contains `videos.jsonl`, `questions.jsonl`, supporting
-metadata, and the `videos/`, `audio/`, and `references/` folders.
-Read the dataset's `KNOWN_ISSUES.md` before evaluation.
+metadata, and the `videos/` and `references/` folders. Original MP4 files retain
+their existing audio tracks; there is no separate audio download.
 
 #### 3. API models
 
@@ -132,8 +137,8 @@ bash run.sh \
 ```
 
 For OmniCompass-AV, change `--track VL` to `--track AV` and use a different
-output directory. The endpoint must support multiple images and, for AV,
-`input_audio`. VL never sends audio.
+output directory. The endpoint must support multiple images and, when audio is
+enabled, `input_audio`. By default, VL uses vision only and AV includes audio.
 
 To add another compatible API, replace the endpoint, model ID, and key.
 No source-code changes are needed.
@@ -154,17 +159,32 @@ preprocessing step is required.
 Each frame is paired with its actual timestamp. The reference image in
 Text+Image is additional and does not count toward `--nframe`.
 
+**Audio**
+
+For audio-enabled runs, the runner extracts the complete audio from each MP4
+and caches it as mono 16 kHz, 32 kbps MP3. Original videos are never modified.
+The cache retains the video's timeline, including any delayed audio start.
+Use `--audio-cache-dir .cache/audio` to choose the cache location.
+
+`--audio auto` preserves the paper settings: off for VL, on for AV.
+Use `--audio on` or `--audio off` for an explicit modality experiment; the prompt
+changes with the input and results record the choice. Audio-enabled selections
+must contain audio in every video. Missing tracks cause an error, not silent
+skipping or replacement with synthetic audio. Use a separate output directory
+for each modality configuration.
+
 | Option | Usage |
 | --- | --- |
 | `--setting text` / `text_image` / `both` | Run either setting or both; CS requires both |
 | `--tasks TG,SG,QA` | Choose one or more tasks, separated by commas |
 | `--nframe 64` / `--fps 1` | Choose a frame count or sampling frequency; frames are cached |
 | `--video-id oc_516` | Test one video before a full run |
+| `--audio auto` / `on` / `off` | Use track defaults or explicitly enable/disable audio |
 | `--concurrency 4` | Set concurrent API requests |
 | `--max-completion-tokens 8192` | Set the output/reasoning token cap accepted by the provider |
 | `--resume` | Continue an interrupted run with the same configuration |
 
-Both reference settings retain the track's video/audio inputs;
+Both reference settings retain the selected video/audio inputs;
 Text+Image additionally receives the reference image.
 Thinking uses the provider default. See `bash run.sh --help` for more options.
 

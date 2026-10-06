@@ -17,8 +17,9 @@ import time
 from urllib.parse import urlsplit
 
 from extract_frames import extract_video
+from extract_audio import extract_audio, PROTOCOL as AUDIO_PROTOCOL, ENCODING as AUDIO_ENCODING
 from release_tools import rows, safe, selected_questions, selected_videos, sha
-from omnicompass_public_adapter import evaluate_public_predictions, render_prompt
+from omnicompass_public_adapter import evaluate_public_predictions, render_prompt, uses_audio
 from omnicompass_release import format_number
 from print_frame_eval_results import is_content_policy_error, is_terminal_policy_refusal
 
@@ -57,19 +58,22 @@ def image_item(path):
         "url": f"data:{mime};base64,{encoded}", "detail": "high"}}
 
 
-def build_content(data, video, question, setting, frames, audio_encoding):
+def build_content(data, video, question, setting, frames, audio_encoding, *,
+                  audio_path=None, use_audio=None):
     directory, manifest = frames
     content = []
     for frame in manifest["frames"]:
         content.append({"type": "text", "text":
                         f"Timestamp: {format_number(frame['timestamp_sec'])} seconds."})
         content.append(image_item(safe(directory, frame["path"])))
-    if question["track"] == "AV":
-        if not video.get("audio_path"):
-            raise ValueError("AV requires the complete published audio")
-        audio = safe(data, video["audio_path"])
+    if use_audio is None:
+        use_audio = uses_audio(question["track"])
+    if use_audio:
+        if audio_path is None:
+            raise ValueError("Prepare the complete audio from the source MP4 before inference")
+        audio = Path(audio_path)
         if audio.suffix.lower() != ".mp3":
-            raise ValueError("AV requires published MP3 audio")
+            raise ValueError("The API adapter requires extracted MP3 audio")
         encoded = base64.b64encode(audio.read_bytes()).decode("ascii")
         if audio_encoding == "data-uri":
             encoded = "data:;base64," + encoded
@@ -77,7 +81,7 @@ def build_content(data, video, question, setting, frames, audio_encoding):
     if setting == "text_image":
         content.append(image_item(safe(data, question["reference_image"])))
     content.append({"type": "text", "text":
-                    render_prompt(question, setting, video["duration_seconds"])})
+                    render_prompt(question, setting, video["duration_seconds"], use_audio=use_audio)})
     return content
 
 
@@ -225,12 +229,18 @@ def run_locked(args):
         raise ValueError("Empty question selection")
     videos = {v["video_id"]: v for v in selected_videos(args.data, args.video_id)
               if any(q["video_id"] == v["video_id"] for q in questions)}
+    use_audio = uses_audio(args.track, args.audio)
+    if use_audio:
+        missing = [v["video_id"] for v in videos.values() if v.get("has_audio") is False]
+        if missing:
+            raise ValueError(f"Selected videos have no audio: {', '.join(missing)}. "
+                             "Select videos with audio or use --audio off; no videos are skipped.")
     host = validate_api_base(args.api_base)
     encoding = args.audio_encoding
     if encoding == "auto":
         encoding = "data-uri" if host.hostname.endswith(".aliyuncs.com") else "base64"
     config = {
-        "version": 1, "model": args.model, "display_model": args.display_model or args.model,
+        "version": 2, "model": args.model, "display_model": args.display_model or args.model,
         "api_base": args.api_base, "track": args.track, "tasks": sorted(tasks),
         "settings": list(settings), "video_ids": sorted(videos),
         "questions_sha256": digest(questions), "videos_sha256": digest(list(videos.values())),
@@ -239,6 +249,9 @@ def run_locked(args):
         "max_completion_tokens": args.max_completion_tokens,
         "thinking": {"reasoning_effort": args.reasoning_effort, "otherwise": "provider_default"},
         "audio_encoding": encoding, "image_detail": "high", "stream": False,
+        "audio": {"mode": args.audio, "enabled": use_audio,
+                  "protocol": AUDIO_PROTOCOL if use_audio else None,
+                  "encoding": AUDIO_ENCODING if use_audio else None},
         "timeout": args.timeout, "retries": args.retries,
         "code_sha256": {p.name: sha(p) for p in sorted(Path(__file__).parent.glob("*.py"))},
     }
@@ -266,7 +279,7 @@ def run_locked(args):
         log.write(message + "\n")
 
     try:
-        frames, receipts = {}, {}
+        frames, audios, receipts = {}, {}, {}
         for vid, video in videos.items():
             directory, manifest, hit = extract_video(
                 safe(args.data, video["video_path"]), args.cache_dir,
@@ -274,10 +287,18 @@ def run_locked(args):
             frames[vid] = (directory, manifest)
             receipts[vid] = {"sampling_sha256": sha(directory / "sampling.json"),
                              "source_sha256": manifest["identity"]["source_sha256"]}
-            if args.track == "AV":
-                if not video.get("audio_path"):
-                    raise ValueError("AV requires the complete published audio")
-                receipts[vid]["audio_sha256"] = sha(safe(args.data, video["audio_path"]))
+            if use_audio:
+                audio, audio_manifest, audio_hit = extract_audio(
+                    safe(args.data, video["video_path"]), args.audio_cache_dir)
+                if audio_manifest["identity"]["source_sha256"] != receipts[vid]["source_sha256"]:
+                    raise ValueError("Source video changed between frame and audio extraction")
+                if abs(audio_manifest["timeline_origin_seconds"] -
+                       manifest["video"]["timeline_origin_seconds"]) > 1e-4:
+                    raise ValueError("Audio and frame timeline origins differ")
+                audios[vid] = audio
+                receipts[vid]["audio_sha256"] = audio_manifest["sha256"]
+                receipts[vid]["audio_manifest_sha256"] = sha(audio.parent / "audio.json")
+                say(f"Audio {vid}: complete MP3 from video, cache={audio_hit}")
             say(f"Frames {len(frames)}/{len(videos)} {vid}: {len(manifest['frames'])}, cache={hit}")
         if "text_image" in settings:
             receipts["references"] = {q["question_id"]: sha(safe(args.data, q["reference_image"])) for q in questions}
@@ -314,14 +335,16 @@ def run_locked(args):
                       "elapsed_seconds": round(elapsed), "updated_at": time.time()}
             write_json(args.output / "progress.json", status)
             bars = int(20 * done / len(jobs))
-            say(f"{config['display_model']} | {args.track} | [{'#' * bars}{'.' * (20-bars)}] "
+            say(f"{config['display_model']} | {args.track} | audio={'on' if use_audio else 'off'} | "
+                f"[{'#' * bars}{'.' * (20-bars)}] "
                 f"{done}/{len(jobs)} | +{done-previous} | ETA {eta if eta is not None else '?'}s")
             previous, last_report = done, now
 
         def execute(job):
             q, setting = job
             content = build_content(args.data, videos[q["video_id"]], q, setting,
-                                    frames[q["video_id"]], encoding)
+                                    frames[q["video_id"]], encoding,
+                                    audio_path=audios.get(q["video_id"]), use_audio=use_audio)
             return send_request(args, secret, content, q, setting)
 
         progress(True)
@@ -352,6 +375,7 @@ def run_locked(args):
                 "error": "not_requested", "error_kind": "missing"}))
         report = evaluate_public_predictions(questions, complete_records, settings)
         report["run"] = {"model": config["display_model"], "requested_model": args.model,
+                         "audio": config["audio"],
                          "new_api_calls": calls, "selected_videos": len(videos),
                          "expected_requests": len(jobs), "saved_requests": len(saved),
                          "returned_models": sorted({r.get("response_meta", {}).get("returned_model")
@@ -364,7 +388,8 @@ def run_locked(args):
             writer.writeheader()
             writer.writerows(table)
         complete = report["tracks"][args.track]["complete"]
-        say(f"\n{config['display_model']} | {args.track} | {'COMPLETE' if complete else 'INCOMPLETE'}")
+        say(f"\n{config['display_model']} | {args.track} | audio={'on' if use_audio else 'off'} | "
+            f"{'COMPLETE' if complete else 'INCOMPLETE'}")
         say(format_table(table))
         say(f"API calls this invocation: {calls}")
         return 0 if complete else 2
@@ -388,6 +413,9 @@ def parser():
     cli.add_argument("--max-side", type=int, default=640)
     cli.add_argument("--jpeg-quality", type=int, default=95)
     cli.add_argument("--cache-dir", type=Path, default=Path(".frame_cache"))
+    cli.add_argument("--audio-cache-dir", type=Path, default=Path(".audio_cache"))
+    cli.add_argument("--audio", choices=["auto", "on", "off"], default="auto",
+                     help="auto: VL vision-only, AV with audio; on/off are explicit modality overrides")
     cli.add_argument("--output", type=Path, required=True)
     cli.add_argument("--video-id", action="append")
     cli.add_argument("--resume", action="store_true")

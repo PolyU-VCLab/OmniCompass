@@ -20,6 +20,12 @@ from print_modality_gain_results import build_paired_cs
 SETTINGS = {"text": "text_target", "text_image": "reference_image"}
 
 
+def uses_audio(track: str, mode: str = "auto") -> bool:
+    if track not in {"VL", "AV"} or mode not in {"auto", "on", "off"}:
+        raise ValueError("Invalid track or audio mode")
+    return track == "AV" if mode == "auto" else mode == "on"
+
+
 def scoring_ground_truth(question: Mapping[str, Any]) -> dict[str, Any]:
     """Restore SG's given interval, which is input rather than public gold."""
     gt = dict(question["ground_truth"])
@@ -47,13 +53,16 @@ def make_request(question: Mapping[str, Any], setting: str) -> dict[str, Any]:
 
 
 def render_prompt(
-    question: Mapping[str, Any], setting: str, duration_seconds: float
+    question: Mapping[str, Any], setting: str, duration_seconds: float,
+    use_audio: bool | None = None,
 ) -> str:
     request = make_request(question, setting)
     gt = dict(request["ground_truth"])
     if question["task"] == "QA":
         gt["options"] = question["options"]
-    builder = build_av_frame_prompt if question["track"] == "AV" else build_frame_prompt
+    if use_audio is None:
+        use_audio = uses_audio(question["track"])
+    builder = build_av_frame_prompt if use_audio else build_frame_prompt
     return builder(
         task=question["task"],
         target_specification=request["target_specification"],

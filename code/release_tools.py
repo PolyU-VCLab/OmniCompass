@@ -52,7 +52,8 @@ def media_selection(data, video_ids):
     videos = selected_videos(data, video_ids)
     questions = selected_questions(data, video_ids)
     names = {v["video_path"] for v in videos}
-    names.update(v["audio_path"] for v in videos if v["audio_path"])
+    # Legacy releases may still declare separately published audio files.
+    names.update(v["audio_path"] for v in videos if v.get("audio_path"))
     names.update(q["reference_image"] for q in questions)
     manifest = rows(data / "media_manifest.jsonl")
     lookup = {r["public_path"]: r for r in manifest}
@@ -111,7 +112,7 @@ def extract(data, out, video_ids):
     if written != set(selected):
         raise ValueError("Archives did not supply all selected media")
     for name in ("videos.jsonl", "questions.jsonl", "taxonomy.json", "schema.json",
-                 "release.json", "media_manifest.jsonl", "MEDIA_SHA256SUMS",
+                 "release.json", "archives.json", "media_manifest.jsonl", "MEDIA_SHA256SUMS",
                  "KNOWN_ISSUES.md", "README.md"):
         source = data / name
         if source.is_file():
@@ -119,8 +120,9 @@ def extract(data, out, video_ids):
     return {"extracted_files": len(written), "selection": video_ids or "all"}
 
 
-def prompts(data, out, video_ids, track, settings=("text", "text_image"), tasks=("TG", "SG", "QA")):
-    from omnicompass_public_adapter import SETTINGS, render_prompt
+def prompts(data, out, video_ids, track, settings=("text", "text_image"), tasks=("TG", "SG", "QA"),
+            audio_mode="auto"):
+    from omnicompass_public_adapter import render_prompt, uses_audio
 
     videos = {v["video_id"]: v for v in selected_videos(data, video_ids)}
     questions = [q for q in selected_questions(data, video_ids, track) if q["task"] in tasks]
@@ -130,17 +132,18 @@ def prompts(data, out, video_ids, track, settings=("text", "text_image"), tasks=
             video = videos[question["video_id"]]
             for setting in settings:
                 reference = question["reference_image"] if setting == "text_image" else None
-                audio = video["audio_path"] if question["track"] == "AV" else None
-                if question["track"] == "AV" and not audio:
-                    raise ValueError("AV requests require the published full audio")
+                enabled = uses_audio(question["track"], audio_mode)
+                if enabled and video.get("has_audio") is False:
+                    raise ValueError(f"No audio in {video['video_id']}; choose videos with audio or --audio off")
                 row = {
                     "question_id": question["question_id"], "setting": setting,
                     "video_id": video["video_id"], "track": question["track"],
                     "task": question["task"], "video_path": video["video_path"],
-                    "audio_path": audio, "reference_image": reference,
-                    "prompt": render_prompt(question, setting, video["duration_seconds"]),
+                    "audio_source": video["video_path"] if enabled else None,
+                    "audio_enabled": enabled, "reference_image": reference,
+                    "prompt": render_prompt(question, setting, video["duration_seconds"], use_audio=enabled),
                     "media_order": ["timestamped_video_frames"] +
-                                  (["audio"] if audio else []) +
+                                  (["audio"] if enabled else []) +
                                   (["reference_image"] if reference else []) + ["prompt"],
                 }
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
@@ -178,10 +181,19 @@ def validate(data):
     if counts != expected:
         raise ValueError("Unexpected track/task counts")
     manifest = rows(data / "media_manifest.jsonl")
-    if len(manifest) != 4240 or len(media_selection(data, None)) != 4240:
+    version = release["schema_version"]
+    if version not in {"1.0", "1.1"}:
+        raise ValueError(f"Unsupported schema version: {version}")
+    expected_media = 4000 if version == "1.1" else 4240
+    kinds = Counter(row["kind"] for row in manifest)
+    expected_kinds = {"video": 820, "reference_image": 3180}
+    if version == "1.0":
+        expected_kinds["audio"] = 240
+    if (len(manifest) != expected_media or kinds != expected_kinds
+            or len(media_selection(data, None)) != expected_media):
         raise ValueError("Unexpected media count or relationships")
     return {"videos": 820, "questions": 3180, "requests": 6360,
-            "media": 4240, "checks": "frozen_hashes_counts_relationships"}
+            "media": expected_media, "checks": "frozen_hashes_counts_relationships"}
 
 
 def main():
@@ -194,6 +206,8 @@ def main():
     parser.add_argument("--predictions", type=Path)
     parser.add_argument("--setting", choices=["text", "text_image", "both"], default="both")
     parser.add_argument("--tasks", default="TG,SG,QA")
+    parser.add_argument("--audio", choices=["auto", "on", "off"], default="auto",
+                        help="Prompt export only: audio from MP4, auto follows track defaults")
     args = parser.parse_args()
     settings = ("text", "text_image") if args.setting == "both" else (args.setting,)
     tasks = args.tasks.split(",")
@@ -210,7 +224,7 @@ def main():
     elif args.command == "verify":
         result = verify(args.data, args.video_id)
     elif args.command == "prompts":
-        result = prompts(args.data, args.out, args.video_id, args.track, settings, tasks)
+        result = prompts(args.data, args.out, args.video_id, args.track, settings, tasks, args.audio)
     else:
         result = score(args.data, args.predictions, args.out, args.video_id, args.track, settings, tasks)
     print(json.dumps(result, indent=2))
