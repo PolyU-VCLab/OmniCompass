@@ -14,10 +14,9 @@ Lei Zhang<sup>1,2</sup>
 <br><br>
 <sup>1</sup> The Hong Kong Polytechnic University,
 <sup>2</sup> OPPO Research Institute
-<br>
 <sup>3</sup> Colorado School of Mines,
-<sup>4</sup> Nanyang Technological University
 <br>
+<sup>4</sup> Nanyang Technological University
 <sup>5</sup> Shanghai Jiao Tong University
 </h4>
 
