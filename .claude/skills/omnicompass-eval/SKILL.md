@@ -12,9 +12,8 @@ If it is missing, ask for the repository location.
 
 ## Set up the run
 
-Read `README.md` and `bash run.sh --help`. Read the relevant sections of
-`docs/evaluation_protocol.md` when preparing inputs, resuming, diagnosing
-failures, or using a custom adapter.
+Read `README.md` and run `bash run.sh --help`. For implementation details,
+inspect `code/run_eval.py`, `code/extract_frames.py`, and `code/release_tools.py`.
 
 Resolve the data path, exact model ID, API endpoint or local server, track,
 tasks, reference setting, frame count or FPS, generation budget, concurrency,
@@ -77,9 +76,10 @@ and failure metadata; never invent predictions to mark a run complete.
 
 ## Score and report
 
-Use `scores.json` and `scores.csv`. For native inference adapters, follow
-`docs/evaluation_protocol.md`: export canonical prompts, write one final row per
-question/setting, and invoke the shared scorer. Do not concatenate raw retry logs.
+Use `scores.json` and `scores.csv`. For native inference adapters, use
+`code/release_tools.py prompts` and `code/release_tools.py score`; inspect their
+`--help` and the prediction schema in `code/run_eval.py` before adapting.
+Write one final row per question/setting. Do not concatenate raw retry logs.
 Single-setting runs have no CS; incomplete runs must not be reported as final.
 
 Report the exact model name, track, tasks, settings, sampling, completed/total

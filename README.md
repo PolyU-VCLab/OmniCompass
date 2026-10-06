@@ -74,8 +74,7 @@ for evaluation with tools such as Codex or Claude Code.
 > and request count, and wait for my confirmation before any paid requests.
 
 Provide the data path when asked. You can change the model, track, tasks, and
-sampling in either prompt. See the [skill](.agents/skills/omnicompass-eval/SKILL.md)
-or its [Chinese version](docs/evaluation_skill.zh.md) for the workflow.
+sampling in either prompt.
 
 ### Formal Evaluation
 
@@ -138,6 +137,22 @@ output directory. The endpoint must support multiple images and, for AV,
 To add another compatible API, replace the endpoint, model ID, and key.
 No source-code changes are needed.
 
+**Frame sampling**
+
+Set the sampling options directly in the `bash run.sh` command.
+The runner extracts frames automatically before inference; no separate
+preprocessing step is required.
+
+- `--nframe 32`: sample 32 frames at evenly spaced times across the full video.
+  Change `32` to the desired count, such as `8`, `16`, `64`, or `128`.
+- `--fps 1`: sample once per second, starting at zero. Replace `--nframe`
+  with this option; the two cannot be used together.
+- `--cache-dir .cache/frames`: save sampled images and timestamps here.
+  Matching runs reuse the cached frames.
+
+Each frame is paired with its actual timestamp. The reference image in
+Text+Image is additional and does not count toward `--nframe`.
+
 | Option | Usage |
 | --- | --- |
 | `--setting text` / `text_image` / `both` | Run either setting or both; CS requires both |
@@ -148,8 +163,8 @@ No source-code changes are needed.
 | `--max-completion-tokens 8192` | Set the output/reasoning token cap accepted by the provider |
 | `--resume` | Continue an interrupted run with the same configuration |
 
-The frame count is configurable. Both reference settings retain the track's
-video/audio inputs; Text+Image additionally receives the reference image.
+Both reference settings retain the track's video/audio inputs;
+Text+Image additionally receives the reference image.
 Thinking uses the provider default. See `bash run.sh --help` for more options.
 
 Scores are saved in `scores.json` and `scores.csv`; model responses are in
