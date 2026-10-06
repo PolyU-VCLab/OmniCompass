@@ -56,7 +56,7 @@ OmniLLMs with native audio-video understanding capabilities.
 ## 📐 Evaluation Pipeline
 
 As for Coding Agent users, we recommend first installing the bundled
-[omnicompass-eval skill](.agents/skills/omnicompass-eval/SKILL.md)
+[omnicompass-eval skill](skills/omnicompass-eval/SKILL.md)
 for evaluation with tools such as Codex or Claude Code.
 
 **Self-hosted VLM example:**
