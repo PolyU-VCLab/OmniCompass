@@ -1,7 +1,11 @@
 <div align="center">
 <h1>OmniCompass: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding</h1>
 
-<h4 align="center">
+<p align="center">
+  <strong>English</strong> | <a href="README_zh-CN.md">中文</a>
+</p>
+
+<p align="center">
 Xuyang Liu<sup>1,2</sup>,
 Shihao Wang<sup>1</sup>,
 Xinyu Wei<sup>1,2</sup>,
@@ -18,7 +22,7 @@ Lei Zhang<sup>1,2</sup>
 <br>
 <sup>4</sup> Nanyang Technological University
 <sup>5</sup> Shanghai Jiao Tong University
-</h4>
+</p>
 
 </div>
 
