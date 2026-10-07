@@ -89,7 +89,7 @@ self-hosted VLMs.
 
 #### 1. Install dependencies
 
-Use Python 3.11+ on Linux or macOS, or WSL2 on Windows.
+Use Python 3.12+ on Linux or macOS, or WSL2 on Windows.
 Run these commands from the toolkit root in Bash:
 
 ```bash

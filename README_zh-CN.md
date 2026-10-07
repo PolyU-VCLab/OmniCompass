@@ -81,7 +81,7 @@ API 模型和自行部署的 VLM 均使用同一个 `run.sh` 入口。
 
 #### 1. 安装依赖
 
-使用 Linux、macOS 或 Windows 的 WSL2，以及 Python 3.11 及以上版本。
+使用 Linux、macOS 或 Windows 的 WSL2，以及 Python 3.12 及以上版本。
 在评测代码仓库根目录通过 Bash 执行：
 
 ```bash

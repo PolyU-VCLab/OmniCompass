@@ -26,7 +26,8 @@ before paid inference. Existing explicit authorization need not be requested
 again. Downloading this repository or asking for setup alone does not authorize
 model calls, weight downloads, or a full benchmark run.
 
-Use Linux or macOS with Bash and Python 3.11+; on Windows use WSL2.
+Use Linux or macOS with Bash and Python 3.12+; on Windows use WSL2.
+The pinned `av==19.0.1` dependency requires Python 3.12 or newer.
 Create the client virtual environment and install `requirements-api.txt`.
 Use its Python for both `python code/release_tools.py` and `bash run.sh`;
 activate the environment or set `PYTHON` to its absolute interpreter path.
