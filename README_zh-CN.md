@@ -57,6 +57,8 @@ OmniCompass-VL 面向通用 VLM，OmniCompass-AV 面向具备原生音视频理�
 
 对于 Codex、Claude Code 等 Coding Agent 用户，建议先安装仓库中的
 [omnicompass-eval skill](skills/omnicompass-eval/SKILL.md)，再使用以下 Prompt 开始评测。
+不安装时，也可以让 Agent 直接读取本仓库的
+`skills/omnicompass-eval/SKILL.md`，并按照其中的步骤执行。
 
 **自行部署 VLM 的示例：**
 
@@ -79,7 +81,8 @@ API 模型和自行部署的 VLM 均使用同一个 `run.sh` 入口。
 
 #### 1. 安装依赖
 
-使用 Python 3.11 及以上版本，在评测代码仓库根目录通过 Bash 执行：
+使用 Linux、macOS 或 Windows 的 WSL2，以及 Python 3.11 及以上版本。
+在评测代码仓库根目录通过 Bash 执行：
 
 ```bash
 python3 -m venv .venv
@@ -90,6 +93,7 @@ pip install -r requirements-api.txt
 启用音频时需要安装 FFmpeg：macOS 使用 `brew install ffmpeg`，
 Ubuntu 使用 `sudo apt-get install ffmpeg`。
 请将 `ffmpeg` 加入 PATH，或通过 `FFMPEG_BINARY` 指定可执行文件路径。
+启用音频前，确认 `ffmpeg -version` 能正常运行。
 
 #### 2. 准备数据
 
@@ -97,6 +101,7 @@ Ubuntu 使用 `sudo apt-get install ffmpeg`。
 下载元数据和媒体分包到 `/path/to/download`，解压到新目录并校验文件：
 
 ```bash
+python code/release_tools.py validate --data /path/to/download
 python code/release_tools.py extract --data /path/to/download --out /path/to/OmniCompass
 python code/release_tools.py verify --data /path/to/OmniCompass
 export DATA_ROOT=/path/to/OmniCompass
@@ -105,6 +110,8 @@ export DATA_ROOT=/path/to/OmniCompass
 解压后的目录包含 `videos.jsonl`、`questions.jsonl`、其他元数据，
 以及 `videos/` 和 `references/` 文件夹。原始 MP4 保留已有音轨；
 默认 VL 评测不使用音频，AV 评测使用音频。
+只下载部分视频时，解压、校验和评测都应传入相同的 `--video-id` 参数，
+多个视频则重复该参数；标注文件仍包含完整数据集的条目。
 
 #### 3. API 模型
 
@@ -168,6 +175,7 @@ Prompt 会随实际输入调整，结果中也会记录该配置。
 | `--tasks TG,SG,QA` | 选择一个或多个任务，以逗号分隔 |
 | `--nframe 64` / `--fps 1` | 选择固定帧数或采样频率；抽取的帧会缓存 |
 | `--video-id oc_516` | 在全量评测前先测试一个视频 |
+| `--max-requests 0` | 只准备所选媒体，不调用模型；退出码 2 和 INCOMPLETE 为预期结果 |
 | `--audio auto` / `on` / `off` | 使用轨道默认值，或显式开启、关闭音频 |
 | `--concurrency 4` | 设置 API 并发请求数 |
 | `--max-completion-tokens 8192` | 设置服务商支持的输出及推理 token 上限 |
@@ -184,6 +192,9 @@ Thinking 使用服务商的默认配置。更多选项见 `bash run.sh --help`�
 例如，在独立 GPU 环境中按照
 [官方部署指南](https://huggingface.co/Qwen/Qwen3.5-9B#vllm)
 安装兼容 Qwen3.5 的 vLLM 版本，并启动本地 VL 服务：
+
+服务端图片数量上限需包含视频帧和一张参考图：
+32 帧至少允许 33 张图片，64 帧至少允许 65 张图片。
 
 ```bash
 vllm serve Qwen/Qwen3.5-9B \

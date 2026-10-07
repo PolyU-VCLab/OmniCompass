@@ -8,7 +8,9 @@ description: Set up, run, resume, and score OmniCompass VL/AV evaluations using 
 Use the existing toolkit; do not implement another prompt builder or scorer.
 All paths below are relative to the toolkit root containing `run.sh`,
 `code/release_tools.py`, and `README.md`. Locate that root before executing.
-If it is missing, ask for the repository location.
+An installed copy of this skill may be outside that checkout. If the root is
+missing, ask for its location or offer to clone `xuyang-liu16/OmniCompass`;
+do not create a replacement runner.
 
 ## Set up the run
 
@@ -24,8 +26,20 @@ before paid inference. Existing explicit authorization need not be requested
 again. Downloading this repository or asking for setup alone does not authorize
 model calls, weight downloads, or a full benchmark run.
 
-Use the README installation and data-extraction commands. Check the selected
-media and `KNOWN_ISSUES.md`; do not transcode or replace published media.
+Use Linux or macOS with Bash and Python 3.11+; on Windows use WSL2.
+Create the client virtual environment and install `requirements-api.txt`.
+Use its Python for both `python code/release_tools.py` and `bash run.sh`;
+activate the environment or set `PYTHON` to its absolute interpreter path.
+Check imports of `av`, `PIL`, and `requests` before preparing media.
+
+Use the README data-extraction commands. If data is missing, hand off to
+`omnicompass-dataset` in `VCLab-PolyU/OmniCompass`, or read that repository's
+`skills/omnicompass-dataset/SKILL.md` directly. Do not download the entire
+dataset just to check a small subset. Run `code/release_tools.py validate`
+on the metadata and `verify` on the selected extracted media. Both require
+`--data`; pass repeated `--video-id` flags to subset verification and evaluation.
+Subset extraction retains the full annotation files, so their presence does
+not imply all videos are available. Do not transcode or replace published media.
 Compute request counts from the selected questions and settings, not video
 counts alone. Keep credentials in the selected environment variable; never
 print them or include them in commands, committed files, or reports.
@@ -34,7 +48,16 @@ For compatible APIs, configure the endpoint, model ID, and key without editing
 the runner. For local models, follow the README's Qwen3.5-9B example or the
 chosen model's official deployment instructions. Confirm GPU resources and
 image/audio support. The default AV configuration requires audio support.
-Install FFmpeg for audio-enabled runs. The release supplies original videos,
+The server image limit must cover sampled frames plus one reference image
+for `text_image` or `both`: 32 frames need 33 images, 64 need 65. For FPS
+sampling, check the largest prepared frame count. Also check the context budget
+and supported audio duration; do not truncate inputs to satisfy a server.
+Use a separate GPU serving environment. The client dependencies do not install
+vLLM, PyTorch, or model weights. HTTP endpoints must be on loopback; use HTTPS
+or an SSH tunnel to a remote GPU server.
+For audio-enabled runs, execute `ffmpeg -version`, or
+`"$FFMPEG_BINARY" -version` if configured; finding a binary on PATH is not enough.
+Confirm its `libmp3lame` encoder is available. The release supplies original videos,
 not separate audio files; the runner extracts and caches complete MP3 audio.
 
 ## Preserve the evaluation protocol
@@ -59,6 +82,15 @@ not separate audio files; the runner extracts and caches complete MP3 audio.
   responses from both settings with matching configuration, not averaged scores.
 
 ## Run and resume
+
+For a new setup, first prepare a selected video with the intended run arguments
+plus `--max-requests 0`, in a separate preflight output directory. This extracts
+and checks cached frames, enabled audio, and references without model calls or
+an API key. Exit code 2 and `INCOMPLETE` are expected for this zero-call run;
+check for `input_receipts.json` and `scores.json` with `new_api_calls: 0`.
+An exception or missing receipts is a failed preparation, not a successful dry run.
+This does not establish model or endpoint compatibility. Do not omit
+`--video-id` for a subset: `--max-requests 0` still prepares all selected videos.
 
 Use `bash run.sh` with comma-separated tasks and a distinct output directory
 per configuration. Start with a small authorized probe for an untested endpoint.

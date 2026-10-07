@@ -61,6 +61,8 @@ OmniLLMs with native audio-video understanding capabilities.
 As for Coding Agent users, we recommend first installing the bundled
 [omnicompass-eval skill](skills/omnicompass-eval/SKILL.md)
 for evaluation with tools such as Codex or Claude Code.
+Without installation, ask your agent to read
+`skills/omnicompass-eval/SKILL.md` in this checkout and follow it.
 
 **Self-hosted VLM example:**
 
@@ -87,7 +89,8 @@ self-hosted VLMs.
 
 #### 1. Install dependencies
 
-Use Python 3.11+ and run these commands from the toolkit root in Bash:
+Use Python 3.11+ on Linux or macOS, or WSL2 on Windows.
+Run these commands from the toolkit root in Bash:
 
 ```bash
 python3 -m venv .venv
@@ -98,6 +101,7 @@ pip install -r requirements-api.txt
 Install FFmpeg for audio-enabled runs: `brew install ffmpeg` on macOS or
 `sudo apt-get install ffmpeg` on Ubuntu. Put `ffmpeg` on PATH, or set
 `FFMPEG_BINARY` to its executable path.
+Check that `ffmpeg -version` runs successfully before audio-enabled evaluation.
 
 #### 2. Prepare the data
 
@@ -107,6 +111,7 @@ into `/path/to/download`.
 Extract into a new directory and verify the files:
 
 ```bash
+python code/release_tools.py validate --data /path/to/download
 python code/release_tools.py extract --data /path/to/download --out /path/to/OmniCompass
 python code/release_tools.py verify --data /path/to/OmniCompass
 export DATA_ROOT=/path/to/OmniCompass
@@ -115,6 +120,8 @@ export DATA_ROOT=/path/to/OmniCompass
 The extracted directory contains `videos.jsonl`, `questions.jsonl`, supporting
 metadata, and the `videos/` and `references/` folders. Original MP4 files retain
 their existing audio tracks; there is no separate audio download.
+For a subset, pass the same repeated `--video-id` flags to extraction,
+verification, and evaluation; the annotation files still describe the full dataset.
 
 #### 3. API models
 
@@ -182,6 +189,7 @@ for each modality configuration.
 | `--tasks TG,SG,QA` | Choose one or more tasks, separated by commas |
 | `--nframe 64` / `--fps 1` | Choose a frame count or sampling frequency; frames are cached |
 | `--video-id oc_516` | Test one video before a full run |
+| `--max-requests 0` | Prepare selected media without model calls; exit code 2 and INCOMPLETE are expected |
 | `--audio auto` / `on` / `off` | Use track defaults or explicitly enable/disable audio |
 | `--concurrency 4` | Set concurrent API requests |
 | `--max-completion-tokens 8192` | Set the output/reasoning token cap accepted by the provider |
@@ -200,6 +208,9 @@ Serve the model through a compatible endpoint, then use the same evaluation comm
 For example, install a Qwen3.5-compatible vLLM version following the
 [official deployment guide](https://huggingface.co/Qwen/Qwen3.5-9B#vllm)
 in a separate GPU environment and start a local VL server:
+
+The server image limit must allow the sampled frames plus one reference:
+33 images for 32 frames, or 65 for 64 frames.
 
 ```bash
 vllm serve Qwen/Qwen3.5-9B \
