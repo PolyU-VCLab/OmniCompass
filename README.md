@@ -32,8 +32,8 @@ Lei Zhang<sup>1,2</sup>
 
 We introduce **OmniCompass**, a holistic benchmark for omni-modal video grounding
 and understanding with paired Text/Text+Image target specifications and
-complementary visual and audio-visual tracks. Across diverse video durations,
-we evaluate **50 MLLMs** on temporal grounding, spatial grounding, and question
+complementary visual and audio-visual tracks. 
+We evaluate **50 MLLMs** on temporal grounding, spatial grounding, and question
 answering, assessing both task performance and cross-reference consistency.
 
 ## 🔥 News
