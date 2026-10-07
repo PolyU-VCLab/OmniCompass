@@ -1,5 +1,4 @@
 <div align="center">
-
 <h1>OmniCompass: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding</h1>
 
 <h4 align="center">
