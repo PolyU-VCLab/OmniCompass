@@ -159,8 +159,8 @@ Set the sampling options directly in the `bash run.sh` command.
 The runner extracts frames automatically before inference; no separate
 preprocessing step is required.
 
-- `--nframe 32`: sample 32 frames at evenly spaced times across the full video.
-  Change `32` to the desired count, such as `8`, `16`, `64`, or `128`.
+- `--nframe 64`: sample 64 frames at evenly spaced times across the full video.
+  Change `64` to the desired count, such as `8`, `16`, `32`, or `128`.
 - `--fps 1`: sample once per second, starting at zero. Replace `--nframe`
   with this option; the two cannot be used together.
 - `--cache-dir .cache/frames`: save sampled images and timestamps here.
