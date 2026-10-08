@@ -150,9 +150,6 @@ For OmniCompass-AV, change `--track VL` to `--track AV` and use a different
 output directory. The endpoint must support multiple images and, when audio is
 enabled, `input_audio`. By default, VL uses vision only and AV includes audio.
 
-To add another compatible API, replace the endpoint, model ID, and key.
-No source-code changes are needed.
-
 **Frame sampling**
 
 Set the sampling options directly in the `bash run.sh` command.
