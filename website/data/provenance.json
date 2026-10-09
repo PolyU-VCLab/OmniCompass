@@ -1,0 +1,103 @@
+{
+  "gemini": {
+    "source": "Project-supplied asset: google_source.png",
+    "sourceSha256": "10c628f55d22a9725b9f9fccce7cf062b9fb68da5f7736e87010e0594d7ba6db"
+  },
+  "bytedance": {
+    "source": "Project-supplied asset: bytedance_source.png",
+    "sourceSha256": "ab75ae358258a3306d9ca024cf420abd00c9dee8c6e5b2aea82bac6a3139edc3"
+  },
+  "qwen": {
+    "source": "Project-supplied asset: qwen_user_source.png",
+    "sourceSha256": "cd7d39991961940c22bac1ed5e1221ab8d98281d68995a494b90b41e6c94f3ad"
+  },
+  "openai": {
+    "source": "Project-supplied asset: openai_source.png",
+    "sourceSha256": "8a33312f6bb17c1edddf8f9d7fbac09ce1d1d697d6601f37227afa879e94c52e"
+  },
+  "kimi": {
+    "source": "Project-supplied asset: kimi_user_source.png",
+    "sourceSha256": "294046b1ff12b59ea677d0dea4da6b01ab3c014f62e6ef7c548479e270890bcc"
+  },
+  "glm": {
+    "source": "Project-supplied asset: glm_user_source.png",
+    "sourceSha256": "87f2df4fb6ca322b54dd6224749d01bfe81c4a1a5e2ab7a1d7c5fadcacdee1bd"
+  },
+  "deepseek": {
+    "source": "Project-supplied asset: deepseek_user_source.png",
+    "sourceSha256": "9859335d199d0f3905007efb091e51d7a576c1b1bb7a89025c39b4e45c4c4f40"
+  },
+  "xiaomi": {
+    "source": "Project-supplied asset: xiaomi.png",
+    "sourceSha256": "e30549d8e19e3f4887011284098707ccb7538f68358af9b8b0056d29e6ad47be"
+  },
+  "kuaishou": {
+    "source": "Project-supplied asset: kuaishou.png",
+    "sourceSha256": "deffc3e6c45c6a76727928d10f91d02db01bf7bc7a947d5bf15afda21cde611d"
+  },
+  "internvl": {
+    "source": "Project-supplied asset: internvl_user_head.png",
+    "sourceSha256": "820c1fe66a6355009f070be2bbed6a2ec12caaecd1d6d6286ece596519173a57"
+  },
+  "llava": {
+    "source": "Project-supplied asset: llava_user_source.png",
+    "sourceSha256": "a200b94bf20f4d741cc4dc954b913f51549705f9ba9d8caf3f8112d379f35a21"
+  },
+  "polyu": {
+    "source": "Project-supplied asset: polyu_logo.png",
+    "sourceSha256": "fd362750f61b7cbb0c7a255e12467159d0ec13f9687f676535c446f924d7ce82"
+  },
+  "oppo": {
+    "source": "Project-supplied asset: oppo_logo.png",
+    "sourceSha256": "39f299ac2cd9a3472e9df799e6fe1a78b9165acee4d18a7b5a1c38209ecc436c"
+  },
+  "sjtu": {
+    "source": "Project-supplied asset: sjtu_logo.png",
+    "sourceSha256": "1e7c0dd1e257b32ae7d789cb71579323c0a2f6e2ed716ca61fd747a4d35151d0"
+  },
+  "vclab": {
+    "source": "Project-supplied asset: vclab_logo.png.jpg",
+    "sourceSha256": "e23f19929b28d1d9d4454fbc7a629e8a5b666e68e588ba46a7bc7d9b19c4e05c"
+  },
+  "openbmb": {
+    "source": "Project-supplied asset: codex-clipboard-7b3fdacf-f395-4dab-80ed-515a6bb13485.png",
+    "sourceSha256": "4b1ed3529fcdea8b47857b43a3eb182947c93e9f8a274a163dfd8001ffb2e71f"
+  },
+  "nju": {
+    "source": "Project-supplied asset: codex-clipboard-c2d918f0-8c1a-4ad3-94a9-48ad406c994a.png",
+    "sourceSha256": "e391964b38436d181db56f99a0c39a2146172288e9998c16f4e5e37b691a9d6d"
+  },
+  "tsinghua": {
+    "source": "Project-supplied asset: codex-clipboard-24b0925a-07fd-4422-8504-969a558e3ee0.png",
+    "sourceSha256": "a7fa7e3ba588936126c79a4bb1b9c7ded72dd16b270df070f6de25adef53a022"
+  },
+  "damo": {
+    "source": "https://img.alicdn.com/imgextra/i4/O1CN01wB5AQ11QnfNGVnmnj_!!6000000002021-0-tps-300-300.jpg",
+    "sourceSha256": "8ae2605bdf017e559308d61c9b904ffb2ccd735e2609fc611b19f65f11c6b797"
+  },
+  "mines": {
+    "source": "https://www.mines.edu/media/minesedu/admin-media/logos/Mines-Logo-triangle-blue.png",
+    "sourceSha256": "16d86f98882788e954023f6ae9e2732184ca33e413ec77de59a8836c6f9cd37c"
+  },
+  "ntu": {
+    "source": "https://www.ntu.edu.sg/ResourcePackages/NTU/assets/images/NTU_Logo.png",
+    "sourceSha256": "45535780334a04c2384d82468ab49c2c8f6d5a77f717246dc42f0c6ff6451503"
+  },
+  "paper": {
+    "source": "OmniCompass_VCLab.pdf",
+    "sha256": "0af7e896e878f2e835c2123e65ae8ba642e57d9dfafaf3e56276d59335d4313f",
+    "pages": 36,
+    "numericScoresVerified": 848,
+    "frameCountsVerified": 53,
+    "classificationCounts": {
+      "VL": {
+        "proprietary": 12,
+        "open": 24
+      },
+      "AV": {
+        "proprietary": 7,
+        "open": 10
+      }
+    }
+  }
+}

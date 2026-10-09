@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#a33241">
+  <meta name="description" content="OmniCompass: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding. Paired references, visual and audio-visual evidence, and three complementary tasks.">
+  <meta property="og:title" content="OmniCompass">
+  <meta property="og:description" content="A Holistic Benchmark for Omni-Modal Video Grounding and Understanding">
+  <meta property="og:image" content="https://polyu-vclab.github.io/OmniCompass/assets/figures/overview-small.webp">
+  <meta property="og:url" content="https://polyu-vclab.github.io/OmniCompass/">
+  <link rel="canonical" href="https://polyu-vclab.github.io/OmniCompass/">
+  <link rel="icon" href="assets/logos/vclab.png" type="image/png">
+  <link rel="preload" href="assets/fonts/source-sans-3-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=20261009-cover">
+  <title>OmniCompass | Video Grounding and Understanding</title>
+  <script type="module" src="scripts/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#overview" data-i18n="skip">Skip to content</a>
+  <div class="desktop-navigation">
+    <nav class="section-nav" aria-label="Sections">
+      <span class="nav-progress" aria-hidden="true"></span>
+      <a href="#overview" data-section="overview" aria-current="location"><span data-i18n="nav.overview">Overview</span></a>
+      <a href="#comparison" data-section="comparison"><span data-i18n="nav.comparison">Comparison</span></a>
+      <a href="#leaderboard" data-section="leaderboard"><span data-i18n="nav.leaderboard">Leaderboard</span></a>
+      <a href="#dataset" data-section="dataset"><span data-i18n="nav.dataset">Dataset</span></a>
+      <a href="#examples" data-section="examples"><span data-i18n="nav.examples">Examples</span></a>
+      <a href="#analysis" data-section="analysis"><span data-i18n="nav.analysis">Analysis</span></a>
+    </nav>
+  </div>
+  <div class="language-switch desktop-language" role="group" aria-label="Language">
+    <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+    <span aria-hidden="true">/</span>
+    <button type="button" data-lang="zh" lang="zh-CN" aria-pressed="false">中文</button>
+  </div>
+  <header class="mobile-header">
+    <a class="mobile-brand" href="#top">OmniCompass</a>
+    <div class="mobile-actions">
+      <button class="mobile-language" type="button" data-toggle-language lang="zh-CN">中文</button>
+      <button class="icon-button menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open navigation">
+        <svg aria-hidden="true"><use href="assets/icons/sprite.svg#menu"></use></svg>
+      </button>
+    </div>
+    <nav id="mobile-nav" hidden aria-label="Sections">
+      <a href="#overview" data-section="overview" data-i18n="nav.overview">Overview</a>
+      <a href="#comparison" data-section="comparison" data-i18n="nav.comparison">Comparison</a>
+      <a href="#leaderboard" data-section="leaderboard" data-i18n="nav.leaderboard">Leaderboard</a>
+      <a href="#dataset" data-section="dataset" data-i18n="nav.dataset">Dataset</a>
+      <a href="#examples" data-section="examples" data-i18n="nav.examples">Examples</a>
+      <a href="#analysis" data-section="analysis" data-i18n="nav.analysis">Analysis</a>
+    </nav>
+  </header>
+  <main id="top">
+    <header class="cover">
+      <h1 data-i18n="title">OmniCompass: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding</h1>
+      <div class="authors" aria-label="Authors">
+        <span>Xuyang Liu<sup>1,2</sup></span><span>Shihao Wang<sup>1</sup></span><span>Xinyu Wei<sup>1,2</sup></span><span>Minghan Li<sup>3</sup></span><span>Zeqing Wang<sup>1,2</sup></span><span>Zuhao Yang<sup>4</sup></span><span>Zichen Wen<sup>5</sup></span><span>Lei Zhang<sup>1,2</sup></span>
+      </div>
+      <div class="affiliation-names" aria-label="Affiliations">
+        <span><sup>1</sup> <span data-i18n="affiliation.polyu">The Hong Kong Polytechnic University</span></span>
+        <span><sup>2</sup> <span data-i18n="affiliation.oppo">OPPO Research Institute</span></span>
+        <span><sup>3</sup> <span data-i18n="affiliation.mines">Colorado School of Mines</span></span>
+        <span><sup>4</sup> <span data-i18n="affiliation.ntu">Nanyang Technological University</span></span>
+        <span><sup>5</sup> <span data-i18n="affiliation.sjtu">Shanghai Jiao Tong University</span></span>
+      </div>
+      <div class="institutions" aria-label="Institution logos">
+        <img src="assets/logos/polyu.png" alt="The Hong Kong Polytechnic University" width="62" height="62">
+        <img class="oppo-logo" src="assets/logos/oppo.png" alt="OPPO" width="108" height="40">
+        <img src="assets/logos/mines.png" alt="Colorado School of Mines" width="62" height="62">
+        <img class="ntu-logo" src="assets/logos/ntu.png" alt="Nanyang Technological University" width="146" height="54">
+        <img src="assets/logos/sjtu.png" alt="Shanghai Jiao Tong University" width="62" height="62">
+      </div>
+      <div class="resource-links">
+        <a class="resource primary" href="assets/OmniCompass.pdf" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#file-text"></use></svg><span data-i18n="paper">Paper</span></a>
+        <a class="resource" href="https://github.com/PolyU-VCLab/OmniCompass" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#github"></use></svg>GitHub</a>
+        <a class="resource" href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#database"></use></svg>Hugging Face</a>
+        <a class="resource" href="#leaderboard"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#chart-no-axes-column-increasing"></use></svg><span data-i18n="nav.leaderboard">Leaderboard</span></a>
+      </div>
+    </header>
+
+    <section id="overview" class="page-section">
+      <div class="section-heading"><h2 data-i18n="nav.overview">Overview</h2><span class="section-note" data-i18n="overview.note">One benchmark, four dimensions</span></div>
+      <p class="section-intro" data-i18n="overview.intro"></p>
+      <div data-figure="overview"></div>
+    </section>
+
+    <section id="comparison" class="page-section">
+      <div class="section-heading"><h2 data-i18n="comparison.title">Benchmark Comparison</h2><span class="section-note" data-i18n="comparison.note">Table 1</span></div>
+      <p class="section-intro" data-i18n="comparison.intro"></p>
+      <div id="comparison-table"></div>
+      <p class="table-note" data-i18n="comparison.legend"></p>
+    </section>
+
+    <section id="leaderboard" class="page-section">
+      <div class="section-heading"><h2 data-i18n="nav.leaderboard">Leaderboard</h2><span class="section-note" data-i18n="leaderboard.note">50 models · 3 tasks</span></div>
+      <p class="section-intro" data-i18n="leaderboard.intro"></p>
+      <div id="leaderboard-vl" class="leaderboard-block" data-track="VL"></div>
+      <div id="leaderboard-av" class="leaderboard-block" data-track="AV"></div>
+      <div class="figure-feature" data-figure="qa-performance"></div>
+    </section>
+
+    <section id="dataset" class="page-section">
+      <div class="section-heading"><h2 data-i18n="nav.dataset">Dataset</h2><a class="text-link" href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass" target="_blank" rel="noopener noreferrer"><span data-i18n="dataset.download">Get the dataset</span><svg aria-hidden="true"><use href="assets/icons/sprite.svg#arrow-up-right"></use></svg></a></div>
+      <p class="section-intro" data-i18n="dataset.intro"></p>
+      <article class="figure-article"><h3 data-i18n="dataset.construction">From video selection to verified annotations</h3><div data-figure="construction"></div></article>
+      <article class="figure-article"><h3 data-i18n="dataset.statistics">A closer look at the data</h3><div data-figure="statistics"></div></article>
+    </section>
+
+    <section id="examples" class="page-section">
+      <div class="section-heading"><h2 data-i18n="nav.examples">Examples</h2><span class="section-note" data-i18n="examples.note">Videos, questions, predictions</span></div>
+      <article class="figure-article"><h3 data-i18n="examples.video">Seven video domains</h3><div data-figure="video-examples"></div></article>
+      <article class="figure-article"><h3 data-i18n="examples.qa">Thirteen question categories</h3><div data-figure="qa-examples"></div></article>
+      <article class="figure-article"><h3 data-i18n="examples.cases">Model predictions across the two tracks</h3><div data-figure="cases"></div></article>
+    </section>
+
+    <section id="analysis" class="page-section">
+      <div class="section-heading"><h2 data-i18n="nav.analysis">Analysis</h2><span class="section-note" data-i18n="analysis.note">What changes model performance?</span></div>
+      <p class="section-intro" data-i18n="analysis.intro"></p>
+      <div id="analysis-figures"></div>
+    </section>
+    <footer class="footer">
+      <a href="#top" class="footer-brand"><span>OmniCompass</span></a>
+      <span data-i18n="footer">Visual Computing Lab · The Hong Kong Polytechnic University</span>
+      <a href="#top" class="icon-button" data-i18n-title="backTop" aria-label="Back to top"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#arrow-up"></use></svg></a>
+    </footer>
+  </main>
+  <dialog id="image-dialog" aria-labelledby="image-dialog-title">
+    <div class="dialog-toolbar">
+      <p id="image-dialog-title"></p>
+      <div class="dialog-actions">
+        <button class="icon-button" type="button" data-image-zoom aria-label="Zoom in" title="Zoom in"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#zoom-in"></use></svg></button>
+        <a class="icon-button" id="original-image" target="_blank" rel="noopener" aria-label="Open original image" title="Open original image"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#external-link"></use></svg></a>
+        <button class="icon-button" type="button" data-close-dialog aria-label="Close image" title="Close image"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#x"></use></svg></button>
+      </div>
+    </div>
+    <div class="dialog-canvas"><img id="dialog-image" alt=""></div>
+  </dialog>
+  <div id="load-error" role="alert" hidden><span data-i18n="loadError">The page could not load. Please try again.</span> <button type="button" data-retry data-i18n="retry">Retry</button></div>
+  <noscript><p class="noscript">JavaScript is needed for the interactive leaderboards. The <a href="assets/OmniCompass.pdf">paper PDF</a> contains the complete results.</p></noscript>
+</body>
+</html>
