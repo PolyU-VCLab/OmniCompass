@@ -153,6 +153,7 @@ bash run.sh \
   相同采样配置会复用已缓存的帧。
 
 每帧均附带其实际时间戳。Text+Image 中的参考图是额外输入，不计入 `--nframe`。
+抽帧程序不会按某个模型的上限减少用户指定的帧数。
 
 **音频**
 
@@ -176,13 +177,32 @@ Prompt 会随实际输入调整，结果中也会记录该配置。
 | `--max-requests 0` | 只准备所选媒体，不调用模型；退出码 2 和 INCOMPLETE 为预期结果 |
 | `--audio auto` / `on` / `off` | 使用轨道默认值，或显式开启、关闭音频 |
 | `--concurrency 4` | 设置 API 并发请求数 |
-| `--max-completion-tokens 8192` | 设置服务商支持的输出及推理 token 上限 |
+| `--max-completion-tokens 32768` | 设置输出及推理 token 上限，默认 32768 |
+| `--thinking auto` / `on` / `off` | 通过服务商支持的参数开启或关闭 Thinking |
+| `--thinking-api chat_template` / `enable_thinking` | 分别选择 vLLM 模板参数或 DashScope 请求参数 |
+| `--timeout 1200` | 设置响应读取超时，单位为秒，默认 1200 |
 | `--resume` | 按相同配置续跑中断的评测 |
 
 两种参考设置均保留所选的视频和音频输入，Text+Image 额外提供参考图。
-Thinking 使用服务商的默认配置。更多选项见 `bash run.sh --help`。
+vLLM 的 Qwen 接口加 `--thinking-api chat_template`，DashScope 接口加
+`--thinking-api enable_thinking`，两者默认开启 Thinking；再加
+`--thinking off` 即可关闭。未指定接口类型时，`auto` 保留服务商默认行为。
+显式选择 `on` 或 `off` 必须同时指定接口类型；接口不支持该参数时，先解决配置再评测。
+开关两种模式都使用同一个 32768 token 输出预算，思考和最终答案共用这个额度。
+服务端的总上下文容量还需要容纳编码后的输入。更多选项见 `bash run.sh --help`。
+
+请求已完成但没有可解析答案时计 0 分，并保留在任务和 CS 的评分分母中，
+包括耗尽输出预算的响应。这类请求计入已处理进度，续跑时不会重复调用。
+截断响应若已有可解析答案，仍按原规则评分。
+网络等请求失败和内容安全拒绝沿用既有排除规则。
+32768 是新运行的默认预算。论文实验使用过 8192、32768，
+以及 8192 后针对截断请求补到 32768 等配置。
+复现某项结果时，需匹配该实验的模型、输入、采样、生成预算和重试策略；
+不同配置的运行使用独立输出目录。
 
 成绩保存在 `scores.json` 和 `scores.csv` 中，模型响应保存在 `predictions.jsonl` 中。
+评分只读取最终答案，原始输出和独立的思考内容保留在 `response_meta` 中。
+切换 Thinking 或其他生成参数时，需要使用新的输出目录。
 
 #### 4. 自行部署 VLM
 
@@ -192,14 +212,16 @@ Thinking 使用服务商的默认配置。更多选项见 `bash run.sh --help`�
 安装兼容 Qwen3.5 的 vLLM 版本，并启动本地 VL 服务：
 
 服务端图片数量上限需包含视频帧和一张参考图：
-32 帧至少允许 33 张图片，64 帧至少允许 65 张图片。
+32 帧至少允许 33 张图片，64 帧至少允许 65 张图片，128 帧至少允许 129 张图片。
+上下文长度需同时容纳输入和输出预算。下例使用 65536，
+请同时检查模型支持的长度和可用显存。
 
 ```bash
 vllm serve Qwen/Qwen3.5-9B \
   --host 127.0.0.1 --port 8000 --api-key local-eval \
   --limit-mm-per-prompt '{"image": 33}' \
   --reasoning-parser qwen3 \
-  --max-model-len 32768 --max-num-seqs 1
+  --max-model-len 65536 --max-num-seqs 1
 ```
 
 在另一个终端激活评测环境并运行：

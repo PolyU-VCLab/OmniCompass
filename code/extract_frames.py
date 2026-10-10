@@ -15,7 +15,30 @@ import tempfile
 from release_tools import safe, selected_videos, sha
 
 PROTOCOL = "omnicompass-uniform-time-pts-v1"
-OFFSETS = (0, -0.25, 0.25, -0.5, 0.5, -1, 1, -2, 2, -5, 5)
+# Try nearby times in order; sparse retries can jump past a dense sample's bounds.
+OFFSETS = (0,) + tuple(offset for step in range(1, 21) for offset in (-step / 4, step / 4))
+# Frozen MP4s with misaligned sample offsets. Never apply recovery to other files.
+OFFSET_RECOVERY_SOURCES = frozenset({
+    "e848275da68b4e0c80565d8ae4538ffb8bf92b3d63bdd68e21236a2f5c20288c",
+    "a2f273f58b541ee4766021d9e03eaf61276d8ddca9f394c720b2bc8b0e954b68",
+})
+
+
+def valid_avcc_packet(data):
+    """Check a complete H.264 sample with four-byte NAL lengths."""
+    position = 0
+    while position < len(data):
+        if position + 4 >= len(data):
+            return False
+        size = int.from_bytes(data[position:position + 4], "big")
+        position += 4
+        if size <= 0 or position + size > len(data):
+            return False
+        header = data[position]
+        if header & 128 or not 1 <= (header & 31) <= 23:
+            return False
+        position += size
+    return position == len(data) and bool(data)
 
 
 def positive_int(value):
@@ -54,9 +77,16 @@ def targets(duration, nframe=None, fps=None, max_frames=10000):
 
 
 class VideoReader:
-    def __init__(self, path):
+    def __init__(self, path, source_sha256=None):
         import av
 
+        self.packet_source = None
+        self.packet_corrections = {}
+        self.failed_packets = {}
+        self.skipped_corrupt_pts = set()
+        self.sequential_frames = None
+        self.sequential_frame = None
+        self.sequential_target = -math.inf
         self.container = av.open(str(path))
         try:
             if not self.container.streams.video:
@@ -77,6 +107,12 @@ class VideoReader:
                 raise ValueError("Video duration is unavailable")
             if not math.isfinite(self.duration) or self.duration <= 0:
                 raise ValueError("Invalid video duration")
+            if source_sha256 in OFFSET_RECOVERY_SOURCES:
+                extra = self.stream.codec_context.extradata
+                if (self.stream.codec_context.name != "h264" or not extra
+                        or len(extra) < 5 or extra[0] != 1 or extra[4] & 3 != 3):
+                    raise ValueError("Offset recovery requires four-byte AVCC H.264 samples")
+                self.packet_source = Path(path).open("rb")
         except Exception:
             self.container.close()
             raise
@@ -90,16 +126,66 @@ class VideoReader:
         }
 
     def close(self):
-        self.container.close()
+        try:
+            self.container.close()
+        finally:
+            if self.packet_source is not None:
+                self.packet_source.close()
 
-    def frame_at(self, seconds):
+    def recover_packet(self, packet):
+        data = bytes(packet)
+        if not data or valid_avcc_packet(data):
+            return
+        if packet.pos is None or packet.pos < 0 or self.packet_source is None:
+            raise ValueError("Invalid packet has no recoverable source offset")
+        self.packet_source.seek(packet.pos)
+        if self.packet_source.read(len(data)) != data:
+            raise ValueError("Packet bytes do not match the original source")
+        candidates = []
+        for shift in (-2, -1, 1, 2):
+            if packet.pos + shift < 0:
+                continue
+            self.packet_source.seek(packet.pos + shift)
+            candidate = self.packet_source.read(len(data))
+            if len(candidate) == len(data) and valid_avcc_packet(candidate):
+                candidates.append((shift, candidate))
+        if len(candidates) != 1:
+            raise ValueError(f"Ambiguous or unrecoverable packet offset: {packet.pos}")
+        shift, corrected = candidates[0]
+        # Update only this in-memory payload; PyAV keeps PTS/DTS and packet flags.
+        packet.update(corrected)
+        self.packet_corrections[packet.pos] = shift
+
+    def decoded_frames(self, skip_decode_errors=False):
+        import av
+
+        if self.packet_source is None:
+            yield from self.container.decode(self.stream)
+            return
+        for packet in self.container.demux(self.stream):
+            self.recover_packet(packet)
+            try:
+                yield from packet.decode()
+            except av.error.InvalidDataError as exc:
+                if not skip_decode_errors:
+                    raise
+                self.failed_packets[packet.pos] = str(exc)
+
+    def frame_at(self, seconds, *, skip_decode_errors=False):
+        if skip_decode_errors and self.packet_source is not None:
+            return self.sequential_frame_at(seconds)
+        self.sequential_frames = None
+        self.sequential_frame = None
         absolute = seconds + self.origin
         offset = math.floor(absolute / float(self.time_base))
         self.container.seek(offset, stream=self.stream, backward=True, any_frame=False)
         last = None
-        for frame in self.container.decode(self.stream):
+        for frame in self.decoded_frames(skip_decode_errors):
             if frame.pts is None:
                 raise ValueError("Decoded frame has no presentation timestamp")
+            if skip_decode_errors and frame.is_corrupt:
+                self.skipped_corrupt_pts.add(frame.pts)
+                continue
             elapsed = float(frame.pts * frame.time_base) - self.origin
             if elapsed + 1e-9 < seconds:
                 last = frame
@@ -115,15 +201,63 @@ class VideoReader:
                 return last.to_image(), elapsed, last.pts, str(last.time_base)
         raise ValueError("No decodable frame at or after the requested time")
 
+    def sequential_frame_at(self, seconds):
+        # These damaged sources can produce unflagged artifacts after a seek.
+        # Decode from the start and retain only the current frame, not the video.
+        if self.sequential_frames is None or seconds < self.sequential_target:
+            start = math.floor(self.origin / float(self.time_base))
+            self.container.seek(start, stream=self.stream, backward=True, any_frame=False)
+            self.sequential_frames = iter(self.decoded_frames(skip_decode_errors=True))
+            self.sequential_frame = None
+        self.sequential_target = seconds
+        while True:
+            frame = self.sequential_frame
+            if frame is not None:
+                elapsed = float(frame.pts * frame.time_base) - self.origin
+                if elapsed + 1e-9 >= seconds:
+                    return frame.to_image(), elapsed, frame.pts, str(frame.time_base)
+            try:
+                frame = next(self.sequential_frames)
+            except StopIteration:
+                if self.sequential_frame is not None and self.sequential_frame.duration:
+                    frame = self.sequential_frame
+                    end = float((frame.pts + frame.duration) * frame.time_base) - self.origin
+                    if seconds < end:
+                        elapsed = float(frame.pts * frame.time_base) - self.origin
+                        return frame.to_image(), elapsed, frame.pts, str(frame.time_base)
+                raise ValueError("No decodable frame at or after the requested time") from None
+            if frame.pts is None:
+                raise ValueError("Decoded frame has no presentation timestamp")
+            if frame.is_corrupt:
+                self.skipped_corrupt_pts.add(frame.pts)
+                continue
+            self.sequential_frame = frame
 
-def sample(reader, requested, previous, on_error):
+
+def sample(reader, requested, previous, on_error, previous_sample=None):
     attempts = []
-    for offset in OFFSETS if on_error == "nearest" else (0,):
+    offsets = OFFSETS if on_error == "nearest" else (0,)
+    if on_error == "nearest" and math.isfinite(previous) and requested < previous <= requested + 5:
+        # Re-read the last real PTS until the schedule catches up after a forward
+        # fallback. Otherwise dense sampling can drift forward all the way to EOF.
+        offsets = (0, previous - requested, *OFFSETS[1:])
+    if on_error == "nearest":
+        # A fractional target's retry grid may miss a short valid interval,
+        # including the initial frame before a damaged first GOP.
+        if math.isfinite(previous) and 0 <= previous < requested and requested - previous <= 5:
+            offsets = (*offsets, previous - requested)
+        if requested <= 5:
+            offsets = (*offsets, -requested)
+    for offset in offsets:
         candidate = requested + offset
         if candidate < 0 or candidate >= reader.duration:
             continue
         try:
-            image, actual, pts, time_base = reader.frame_at(candidate)
+            decode_recovery = on_error == "nearest" and getattr(reader, "packet_source", None) is not None
+            if decode_recovery:
+                image, actual, pts, time_base = reader.frame_at(candidate, skip_decode_errors=True)
+            else:
+                image, actual, pts, time_base = reader.frame_at(candidate)
             if actual + 1e-9 < previous:
                 raise ValueError("Fallback frame would break chronological order")
             if actual >= reader.duration + 1e-6:
@@ -138,10 +272,28 @@ def sample(reader, requested, previous, on_error):
                 "pts": pts,
                 "time_base": time_base,
                 "fallback_offset_sec": offset,
+                "decode_recovery": decode_recovery,
                 "attempts": attempts,
             }
         except Exception as exc:
             attempts.append({"candidate_timestamp_sec": candidate, "error": str(exc)})
+    if on_error == "nearest" and previous_sample is not None:
+        image, row = previous_sample
+        actual = row["timestamp_sec"]
+        # A valid frame can be unreachable by seeking back into a damaged GOP.
+        # Reuse only the last decoded image, within the same timing bounds.
+        if actual == previous and 0 <= actual < reader.duration and abs(actual - requested) <= 5:
+            return image, {
+                "requested_timestamp_sec": requested,
+                "candidate_timestamp_sec": actual,
+                "timestamp_sec": actual,
+                "pts": row["pts"],
+                "time_base": row["time_base"],
+                "fallback_offset_sec": actual - requested,
+                "decode_recovery": row["decode_recovery"],
+                "reused_previous_frame": True,
+                "attempts": attempts,
+            }
     raise ValueError(f"Cannot sample at {requested:.6f}s: {attempts}")
 
 
@@ -205,7 +357,7 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
     root = Path(cache_dir).resolve()
     root.mkdir(parents=True, exist_ok=True)
     destination = root / key
-    reader = VideoReader(video)
+    reader = VideoReader(video, source_sha256=source_hash)
     try:
         schedule = targets(reader.duration, nframe, fps, max_frames)
         with cache_lock(root, key):
@@ -220,9 +372,11 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
             try:
                 frames = []
                 previous = -math.inf
+                previous_sample = None
                 for ordinal, requested in enumerate(schedule):
-                    image, row = sample(reader, requested, previous, on_error)
+                    image, row = sample(reader, requested, previous, on_error, previous_sample)
                     previous = row["timestamp_sec"]
+                    previous_sample = (image, row)
                     image = image.convert("RGB")
                     if max_side and max(image.size) > max_side:
                         from PIL import Image
@@ -244,7 +398,21 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
                     "frames": frames,
                     "fallback_frames": sum(bool(f["fallback_offset_sec"]) for f in frames),
                     "duplicate_frames": len(frames) - len({f["pts"] for f in frames}),
+                    "reused_previous_frames": sum(f.get("reused_previous_frame", False) for f in frames),
                 }
+                if reader.packet_source is not None:
+                    manifest["packet_offset_recovery"] = {
+                        "method": "known-source-avcc-offset-v1",
+                        "corrected_packets": len(reader.packet_corrections),
+                        "offsets": [{"position": pos, "shift": shift} for pos, shift in
+                                    sorted(reader.packet_corrections.items())],
+                    }
+                    manifest["decode_recovery"] = {
+                        "method": "strict-sequential-valid-frames",
+                        "failed_packets": len(reader.failed_packets),
+                        "skipped_corrupt_frames": len(reader.skipped_corrupt_pts),
+                        "affected_output_frames": sum(f["decode_recovery"] for f in frames),
+                    }
                 (stage / "sampling.json").write_text(json.dumps(manifest, indent=2) + "\n")
                 stage.rename(destination)
             finally:
@@ -302,6 +470,7 @@ def main(argv=None):
                     "manifest": str(directory / "sampling.json"), "cache_hit": reused,
                     "frames": len(manifest["frames"]), "fallback_frames": manifest["fallback_frames"],
                     "duplicate_frames": manifest["duplicate_frames"],
+                    "decode_recovery_frames": manifest.get("decode_recovery", {}).get("affected_output_frames", 0),
                 }), flush=True)
             except Exception as exc:
                 failures += 1

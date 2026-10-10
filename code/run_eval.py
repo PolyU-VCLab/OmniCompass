@@ -111,6 +111,28 @@ def redact(text, secret):
     return text[:1600]
 
 
+def thinking_parameters(args):
+    mode = getattr(args, "thinking", "auto")
+    api = getattr(args, "thinking_api", None)
+    if api is None:
+        if mode != "auto":
+            raise ValueError("Select --thinking-api chat_template or enable_thinking "
+                             "for this endpoint before forcing Thinking on/off")
+        return {}
+    enabled = mode != "off"
+    if api == "enable_thinking":
+        return {"enable_thinking": enabled}
+    return {"chat_template_kwargs": {"enable_thinking": enabled}}
+
+
+def final_answer(output):
+    if "</think>" in output:
+        return output.partition("</think>")[2].strip()
+    if output.lstrip().startswith("<think>"):
+        return ""
+    return output
+
+
 def send_request(args, secret, content, question, setting):
     import requests
 
@@ -119,6 +141,7 @@ def send_request(args, secret, content, question, setting):
               "input_sha256": digest(content), "attempt_records": []}
     payload = {"model": args.model, "messages": [{"role": "user", "content": content}],
                "max_completion_tokens": args.max_completion_tokens, "temperature": 0}
+    payload.update(thinking_parameters(args))
     if args.reasoning_effort:
         payload["reasoning_effort"] = args.reasoning_effort
     started = time.monotonic()
@@ -144,13 +167,14 @@ def send_request(args, secret, content, question, setting):
                     output = message.get("content") or ""
                     if not isinstance(output, str):
                         raise ValueError("Non-text completion content")
-                    result.update(raw_output=output, error=None, error_kind=None,
+                    result.update(raw_output=final_answer(output), error=None, error_kind=None,
                                   http_status=status, response_meta={
                                       "response_id": body.get("id"),
                                       "returned_model": body.get("model"),
                                       "finish_reason": choice.get("finish_reason"),
                                       "usage": body.get("usage"),
                                       "reasoning_content": message.get("reasoning_content"),
+                                      "raw_generation": output,
                                   })
                     if message.get("refusal"):
                         result["validation_error"] = "content_policy_refusal"
@@ -220,6 +244,7 @@ def run(args):
 
 def run_locked(args):
     started = time.monotonic()
+    thinking = thinking_parameters(args)
     settings = ("text", "text_image") if args.setting == "both" else (args.setting,)
     tasks = args.tasks.split(",")
     if not tasks or len(set(tasks)) != len(tasks) or not set(tasks) <= {"TG", "SG", "QA"}:
@@ -247,7 +272,8 @@ def run_locked(args):
         "nframe": args.nframe, "fps": args.fps, "max_side": args.max_side,
         "jpeg_quality": args.jpeg_quality, "temperature": 0,
         "max_completion_tokens": args.max_completion_tokens,
-        "thinking": {"reasoning_effort": args.reasoning_effort, "otherwise": "provider_default"},
+        "thinking": {"mode": args.thinking, "api": args.thinking_api,
+                     "request_parameters": thinking, "reasoning_effort": args.reasoning_effort},
         "audio_encoding": encoding, "image_detail": "high", "stream": False,
         "audio": {"mode": args.audio, "enabled": use_audio,
                   "protocol": AUDIO_PROTOCOL if use_audio else None,
@@ -420,10 +446,16 @@ def parser():
     cli.add_argument("--video-id", action="append")
     cli.add_argument("--resume", action="store_true")
     cli.add_argument("--concurrency", type=int, default=4)
-    cli.add_argument("--max-completion-tokens", type=int, default=8192)
+    cli.add_argument("--max-completion-tokens", type=int, default=32768,
+                     help="Output/reasoning token cap (default: 32768)")
     cli.add_argument("--reasoning-effort")
+    cli.add_argument("--thinking", choices=["auto", "on", "off"], default="auto",
+                     help="auto enables Thinking when --thinking-api is set; otherwise uses provider default")
+    cli.add_argument("--thinking-api", choices=["chat_template", "enable_thinking"],
+                     help="Endpoint toggle: chat_template (vLLM) or enable_thinking (DashScope)")
     cli.add_argument("--audio-encoding", choices=["auto", "base64", "data-uri"], default="auto")
-    cli.add_argument("--timeout", type=float, default=180)
+    cli.add_argument("--timeout", type=float, default=1200,
+                     help="Response read timeout in seconds (default: 1200)")
     cli.add_argument("--retries", type=int, default=1)
     cli.add_argument("--progress-interval", type=float, default=15)
     cli.add_argument("--max-requests", type=int, help="Stop after this many selected requests; resume later")

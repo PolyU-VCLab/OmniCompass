@@ -9,7 +9,7 @@ Use the existing toolkit; do not implement another prompt builder or scorer.
 All paths below are relative to the toolkit root containing `run.sh`,
 `code/release_tools.py`, and `README.md`. Locate that root before executing.
 An installed copy of this skill may be outside that checkout. If the root is
-missing, ask for its location or offer to clone `xuyang-liu16/OmniCompass`;
+missing, ask for its location or offer to clone `PolyU-VCLab/OmniCompass`;
 do not create a replacement runner.
 
 ## Set up the run
@@ -50,7 +50,7 @@ the runner. For local models, follow the README's Qwen3.5-9B example or the
 chosen model's official deployment instructions. Confirm GPU resources and
 image/audio support. The default AV configuration requires audio support.
 The server image limit must cover sampled frames plus one reference image
-for `text_image` or `both`: 32 frames need 33 images, 64 need 65. For FPS
+for `text_image` or `both`: 32 frames need 33 images, 64 need 65, and 128 need 129. For FPS
 sampling, check the largest prepared frame count. Also check the context budget
 and supported audio duration; do not truncate inputs to satisfy a server.
 Use a separate GPU serving environment. The client dependencies do not install
@@ -75,10 +75,22 @@ not separate audio files; the runner extracts and caches complete MP3 audio.
 - `text` retains the track's video/audio input; only `text_image` adds the reference.
 - Use the published prompts, actual sampled timestamps, and full-video sampling,
   including for SG. Never send ground truth or whole question records to a model.
-- Choose `--nframe` or `--fps`, never both. Frame count is configurable.
+- Choose `--nframe` or `--fps`, never both. Preserve the requested count or
+  cadence; do not add a model-specific frame cap or silently subsample.
+- New runs default to 32768 output/reasoning tokens and a 1200-second response
+  read timeout. Match the recorded budget and retry policy when reproducing a
+  paper experiment; historical runs did not all use one budget.
 - Record the actual thinking, token, sampling, and server settings; do not assume
   all providers have thinking enabled. Do not silently remove audio, timestamps,
   or references, or change prompts to fit a server.
+- For supported Qwen endpoints, select `--thinking-api chat_template` for vLLM
+  or `--thinking-api enable_thinking` for DashScope. The selected toggle defaults
+  to on; `--thinking off` disables it. With no toggle selection, `auto` preserves
+  the provider default. Confirm support with a small authorized request.
+  Thinking and final output share the same 32768-token budget in both modes.
+  Keep the server's total context capacity separate from this output cap.
+- Score only the final answer. Preserve `response_meta.raw_generation` and
+  `reasoning_content` for diagnosis; do not parse answers from unfinished thinking.
 - Run `text`, `text_image`, or `both` as requested. CS needs eligible paired
   responses from both settings with matching configuration, not averaged scores.
 
@@ -112,7 +124,9 @@ claim background monitoring unless a monitor is actually running.
 
 Use the runner's bounded retries. Stop expansion on authentication, quota,
 unsupported modality, or persistent transport failures; diagnose before more calls.
-Completed malformed or truncated answers follow the existing scoring rules.
+Completed responses without a parseable answer, including budget exhaustion,
+score zero and remain in task and CS denominators. Parseable truncated answers
+retain their existing scores. Both are terminal and must not be retried on resume.
 Do not increase the token budget or rerun completed answers to improve scores
 without authorization for a separately recorded experiment. Preserve refusals
 and failure metadata; never invent predictions to mark a run complete.

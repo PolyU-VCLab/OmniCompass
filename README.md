@@ -165,6 +165,7 @@ preprocessing step is required.
 
 Each frame is paired with its actual timestamp. The reference image in
 Text+Image is additional and does not count toward `--nframe`.
+The sampler does not reduce the requested count to a model-specific limit.
 
 **Audio**
 
@@ -189,15 +190,38 @@ for each modality configuration.
 | `--max-requests 0` | Prepare selected media without model calls; exit code 2 and INCOMPLETE are expected |
 | `--audio auto` / `on` / `off` | Use track defaults or explicitly enable/disable audio |
 | `--concurrency 4` | Set concurrent API requests |
-| `--max-completion-tokens 8192` | Set the output/reasoning token cap accepted by the provider |
+| `--max-completion-tokens 32768` | Set the output/reasoning token cap; default 32768 |
+| `--thinking auto` / `on` / `off` | Enable or disable Thinking through the endpoint's supported toggle |
+| `--thinking-api chat_template` / `enable_thinking` | Select the vLLM chat-template or DashScope request parameter |
+| `--timeout 1200` | Set the response read timeout in seconds; default 1200 |
 | `--resume` | Continue an interrupted run with the same configuration |
 
 Both reference settings retain the selected video/audio inputs;
 Text+Image additionally receives the reference image.
-Thinking uses the provider default. See `bash run.sh --help` for more options.
+For vLLM Qwen endpoints, add `--thinking-api chat_template`; for DashScope,
+use `--thinking-api enable_thinking`. Both enable Thinking by default.
+Add `--thinking off` to disable it. Without an API toggle selection, `auto`
+keeps the provider default. Explicit `on` or `off` requires a selected toggle;
+an unsupported provider parameter must be resolved before evaluation.
+Both modes keep the same 32768-token output budget, shared by reasoning and
+the final answer. The server's total context must also fit the encoded input.
+See `bash run.sh --help` for more options.
+
+Completed responses that contain no parseable answer score zero and remain in
+the task and CS denominators, including responses that exhaust the output budget.
+The runner records them as processed and does not retry them on resume.
+Parseable answers retain their existing scores even when the response is truncated.
+Transport failures and content-policy refusals follow the existing exclusion rules.
+The 32768-token default applies to new runs. Paper experiments used different
+budgets, including 8192, 32768, and 8192 with targeted 32768-token recovery.
+To reproduce a reported result, match that experiment's model, inputs, sampling,
+generation budget, and retry policy. Keep runs with different configurations separate.
 
 Scores are saved in `scores.json` and `scores.csv`; model responses are in
 `predictions.jsonl`.
+Only the final answer is scored. Original response content and separate reasoning
+are retained in `response_meta`. Changing Thinking or generation settings requires
+a new output directory.
 
 #### 4. Self-hosted VLMs
 
@@ -207,14 +231,16 @@ For example, install a Qwen3.5-compatible vLLM version following the
 in a separate GPU environment and start a local VL server:
 
 The server image limit must allow the sampled frames plus one reference:
-33 images for 32 frames, or 65 for 64 frames.
+33 images for 32 frames, 65 for 64 frames, or 129 for 128 frames.
+The context window must fit both the input and the output budget. The example
+below uses 65536 tokens; check the model's capacity and available GPU memory.
 
 ```bash
 vllm serve Qwen/Qwen3.5-9B \
   --host 127.0.0.1 --port 8000 --api-key local-eval \
   --limit-mm-per-prompt '{"image": 33}' \
   --reasoning-parser qwen3 \
-  --max-model-len 32768 --max-num-seqs 1
+  --max-model-len 65536 --max-num-seqs 1
 ```
 
 In a separate terminal, activate the client environment and run the evaluation:
