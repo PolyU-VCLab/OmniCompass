@@ -24,6 +24,13 @@ Lei Zhang<sup>1,2</sup>
 <sup>5</sup> Shanghai Jiao Tong University
 </p>
 
+<p align="center">
+  <a href="https://github.com/PolyU-VCLab/OmniCompass/blob/main/website/assets/OmniCompass.pdf"><img src="https://img.shields.io/badge/Paper-PDF-b31b1b.svg" alt="Paper"></a>
+  <a href="https://polyu-vclab.github.io/OmniCompass/"><img src="https://img.shields.io/badge/Project-Homepage-8F1329.svg" alt="Homepage"></a>
+  <a href="https://github.com/PolyU-VCLab/OmniCompass"><img src="https://img.shields.io/badge/Code-GitHub-555555.svg" alt="GitHub"></a>
+  <a href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass"><img src="https://img.shields.io/badge/Dataset-HuggingFace-FCC624.svg" alt="Hugging Face"></a>
+</p>
+
 </div>
 
 <p align="center">
