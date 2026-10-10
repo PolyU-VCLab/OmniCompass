@@ -12,9 +12,9 @@
   <link rel="canonical" href="https://polyu-vclab.github.io/OmniCompass/">
   <link rel="icon" href="assets/logos/vclab.png" type="image/png">
   <link rel="preload" href="assets/fonts/source-sans-3-regular.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261009-cover">
+  <link rel="stylesheet" href="styles.css?v=20261010-paper-hover">
   <title>OmniCompass | Video Grounding and Understanding</title>
-  <script type="module" src="scripts/app.js"></script>
+  <script type="module" src="scripts/app.js?v=20261010-paper-link"></script>
 </head>
 <body>
   <a class="skip-link" href="#overview" data-i18n="skip">Skip to content</a>
@@ -72,7 +72,7 @@
         <img src="assets/logos/sjtu.png" alt="Shanghai Jiao Tong University" width="62" height="62">
       </div>
       <div class="resource-links">
-        <a class="resource primary" href="assets/OmniCompass.pdf" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#file-text"></use></svg><span data-i18n="paper">Paper</span></a>
+        <a id="paper-link" class="resource" role="link" aria-disabled="true" tabindex="-1"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#file-text"></use></svg><span data-i18n="paper">Paper</span></a>
         <a class="resource" href="https://github.com/PolyU-VCLab/OmniCompass" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#github"></use></svg>GitHub</a>
         <a class="resource" href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#database"></use></svg>Hugging Face</a>
         <a class="resource" href="#leaderboard"><svg aria-hidden="true"><use href="assets/icons/sprite.svg#chart-no-axes-column-increasing"></use></svg><span data-i18n="nav.leaderboard">Leaderboard</span></a>
@@ -137,6 +137,6 @@
     <div class="dialog-canvas"><img id="dialog-image" alt=""></div>
   </dialog>
   <div id="load-error" role="alert" hidden><span data-i18n="loadError">The page could not load. Please try again.</span> <button type="button" data-retry data-i18n="retry">Retry</button></div>
-  <noscript><p class="noscript">JavaScript is needed for the interactive leaderboards. The <a href="assets/OmniCompass.pdf">paper PDF</a> contains the complete results.</p></noscript>
+  <noscript><p class="noscript">JavaScript is needed for the interactive leaderboards.</p></noscript>
 </body>
 </html>

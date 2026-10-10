@@ -24,9 +24,10 @@ jobs:
         with:
           node-version: '22'
       - run: npm test --prefix website
+      - run: node website/scripts/build.mjs "$RUNNER_TEMP/omnicompass-site"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: website
+          path: ${{ runner.temp }}/omnicompass-site
       - id: deployment
         uses: actions/deploy-pages@v4

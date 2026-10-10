@@ -106,14 +106,18 @@ export function boardMarkup(rows, state, track, t) {
     </div>`;
 }
 
-export function comparisonMarkup(rows, t) {
+export function comparisonMarkup(rows, t, paperPdfUrl = "") {
   const yesNo = value => `<span class="${value ? "check" : "absent"}" aria-label="${value ? t.yes : t.no}">${value ? "✓" : "–"}</span>`;
   let currentGroup = "";
   const body = rows.map(row => {
     const group = row.group !== currentGroup ? `<tr class="group-row ${row.group}"><td colspan="15">${row.group === "video" ? t.videoGroup : t.avGroup}</td></tr>` : "";
     currentGroup = row.group;
     const paperLabel = `${t.paper}: ${row.name}`;
-    return `${group}<tr class="${row.ours ? "ours" : ""}"><th class="pinned" scope="row"><a class="benchmark-link" href="${escapeHTML(row.paperUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(paperLabel)}" title="${escapeHTML(paperLabel)}"><span>${escapeHTML(row.name)}</span><svg aria-hidden="true"><use href="assets/icons/sprite.svg#arrow-up-right"></use></svg></a></th>
+    const paperUrl = row.ours ? paperPdfUrl : row.paperUrl;
+    const name = paperUrl
+      ? `<a class="benchmark-link" href="${escapeHTML(paperUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(paperLabel)}" title="${escapeHTML(paperLabel)}"><span>${escapeHTML(row.name)}</span><svg aria-hidden="true"><use href="assets/icons/sprite.svg#arrow-up-right"></use></svg></a>`
+      : `<span class="benchmark-name">${escapeHTML(row.name)}</span>`;
+    return `${group}<tr class="${row.ours ? "ours" : ""}"><th class="pinned" scope="row">${name}</th>
       ${row.features.map(value => `<td>${yesNo(value)}</td>`).join("")}
       <td>${row.videos.toLocaleString("en-US")}</td><td>${row.instances.toLocaleString("en-US")}</td>
       <td>${t.annotationTypes[row.annotation]}</td><td>${row.seconds.toFixed(1)}</td></tr>`;

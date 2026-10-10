@@ -79,6 +79,7 @@ h1{font-size:40px;font-weight:600;color:var(--ink);max-width:1080px;margin:22px 
 .resource:hover{border-color:var(--brick);color:var(--brick);background:var(--brick-wash)}
 .resource.primary{background:var(--brick);border-color:var(--brick);color:#fff}
 .resource.primary:hover{background:var(--brick-dark)}
+.resource[aria-disabled="true"]{cursor:pointer}
 .resource svg{width:16px;height:16px}
 .page-section{padding:46px 0 56px;border-top:1px solid var(--rule);scroll-margin-top:32px}
 .section-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:20px}

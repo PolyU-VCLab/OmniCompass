@@ -1,5 +1,7 @@
 import { text, figureText, analyses } from "../data/content.js";
-import { boardMarkup, comparisonMarkup, readBoardState } from "./tables.js";
+import { boardMarkup, comparisonMarkup, readBoardState } from "./tables.js?v=20261010-paper-link";
+import { paperArxivUrl } from "../data/links.js?v=20261010-paper-link";
+import { configurePaperLink } from "./paper.js?v=20261010-paper-link";
 
 const params = new URLSearchParams(location.search);
 let language = params.get("lang") === "zh" ? "zh" : "en";
@@ -8,6 +10,7 @@ let currentSection = "overview";
 const states = { VL: readBoardState(params, "VL"), AV: readBoardState(params, "AV") };
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const paperPdfUrl = configurePaperLink($("#paper-link"), paperArxivUrl);
 const dialog = $("#image-dialog");
 const desktopNavigation = $(".desktop-navigation");
 let openedFigure = null;
@@ -72,7 +75,7 @@ function render() {
   $("#analysis-figures").innerHTML = analyses.map(item => `<article class="analysis-article" id="analysis-${item.id}">
     <h3>${item[language][0]}</h3><p class="analysis-summary">${item[language][1]}</p>${renderFigure(item.id)}</article>`).join("");
   const comparisonScroll = $("#comparison-table .table-scroll")?.scrollLeft || 0;
-  $("#comparison-table").innerHTML = comparisonMarkup(comparisons, text[language].comparison);
+  $("#comparison-table").innerHTML = comparisonMarkup(comparisons, text[language].comparison, paperPdfUrl);
   $("#comparison-table .table-scroll").scrollLeft = comparisonScroll;
   renderBoard("VL");
   renderBoard("AV");

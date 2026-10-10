@@ -353,7 +353,7 @@
   },
   {
     "name": "OmniCompass-VL",
-    "paperUrl": "assets/OmniCompass.pdf",
+    "paperUrl": "",
     "group": "video",
     "ours": true,
     "features": [
@@ -507,7 +507,7 @@
   },
   {
     "name": "OmniCompass-AV",
-    "paperUrl": "assets/OmniCompass.pdf",
+    "paperUrl": "",
     "group": "av",
     "ours": true,
     "features": [

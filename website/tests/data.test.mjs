@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync } from "node:fs";
-import { createHash } from "node:crypto";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { sortRows, selectRows, readBoardState, sortKeys, scoreKeys, boardMarkup, comparisonMarkup } from "../scripts/tables.js";
 import { text, figureText, analyses } from "../data/content.js";
@@ -128,17 +127,21 @@ test("Comparison headings use full translated task names and reference settings"
   }
 });
 
-test("Every comparison benchmark links directly to its paper", () => {
+test("Published comparison benchmarks link to papers; OmniCompass waits for arXiv", () => {
   assert.equal(new Set(comparison.filter(row => !row.ours).map(row => row.paperUrl)).size, 22);
   for (const row of comparison) {
-    if (row.ours) assert.equal(row.paperUrl, "assets/OmniCompass.pdf");
+    if (row.ours) assert.equal(row.paperUrl, "");
     else assert.match(row.paperUrl, /^https:\/\/arxiv\.org\/abs\/\d{4}\.\d{5}$/);
   }
   for (const lang of ["en", "zh"]) {
     const html = comparisonMarkup(comparison, text[lang].comparison);
-    assert.equal((html.match(/class="benchmark-link"/g) || []).length, 24);
-    assert.equal((html.match(/target="_blank" rel="noopener noreferrer"/g) || []).length, 24);
-    for (const row of comparison) assert.ok(html.includes(`href="${row.paperUrl}"`));
+    assert.equal((html.match(/class="benchmark-link"/g) || []).length, 22);
+    assert.equal((html.match(/target="_blank" rel="noopener noreferrer"/g) || []).length, 22);
+    for (const row of comparison.filter(row => !row.ours)) assert.ok(html.includes(`href="${row.paperUrl}"`));
+    assert.equal((html.match(/class="benchmark-name"/g) || []).length, 2);
+    assert.doesNotMatch(html, /href=""|OmniCompass\.pdf/);
+    const published = comparisonMarkup(comparison, text[lang].comparison, "https://arxiv.org/pdf/2601.00001");
+    assert.equal((published.match(/href="https:\/\/arxiv.org\/pdf\/2601.00001"/g) || []).length, 2);
   }
 });
 
@@ -193,8 +196,9 @@ test("Overview covers all four dimensions and evaluation scope in both languages
   assert.ok(!text.en.overview.intro.includes("when, where, and what"));
 });
 
-test("Bundled PDF is byte-identical to the approved paper", () => {
-  assert.equal(createHash("sha256").update(readFileSync(`${root}assets/OmniCompass.pdf`)).digest("hex"), json("provenance").paper.sha256);
+test("Website retains paper provenance without bundling a PDF", () => {
+  assert.match(json("provenance").paper.sha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual(readdirSync(root, { recursive: true }).filter(path => /\.pdf$/i.test(path)), []);
 });
 
 test("Header links have the confirmed repository owners and no invented arXiv link", () => {
@@ -202,7 +206,11 @@ test("Header links have the confirmed repository owners and no invented arXiv li
   assert.ok(html.includes("https://github.com/PolyU-VCLab/OmniCompass"));
   assert.ok(html.includes("https://huggingface.co/datasets/VCLab-PolyU/OmniCompass"));
   assert.ok(!html.includes("arxiv.org"));
-  assert.ok(html.includes('href="assets/OmniCompass.pdf"'));
+  const paperLink = html.match(/<a id="paper-link"[^>]*>/)[0];
+  assert.ok(paperLink.includes('aria-disabled="true"'));
+  assert.ok(paperLink.includes('tabindex="-1"'));
+  assert.doesNotMatch(paperLink, /\bhref=/);
+  assert.doesNotMatch(html, /OmniCompass\.pdf/);
   assert.ok(!html.includes('href="/assets/'));
   assert.ok(html.includes('<h1 data-i18n="title">OmniCompass: A Holistic Benchmark'));
   assert.ok(!html.includes('class="paper-title"'));
