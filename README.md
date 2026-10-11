@@ -43,6 +43,15 @@ complementary visual and audio-visual tracks.
 We evaluate **50 MLLMs** on temporal grounding, spatial grounding, and question
 answering, assessing both task performance and cross-reference consistency.
 
+## 📝 Content
+
+- [News](#-news)
+- [Overview](#-overview)
+- [Evaluation Pipeline](#-evaluation-pipeline)
+- [Experiments Results](#-experiments-results)
+- [Citation](#-citation)
+- [Contact](#-contact)
+
 ## 🔥 News
 
 * **`2026.10.06`** 🤗🤗 We release OmniCompass, a holistic benchmark for omni-modal video grounding and understanding.
