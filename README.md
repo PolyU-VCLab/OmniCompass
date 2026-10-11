@@ -277,3 +277,10 @@ bash run.sh \
 <p align="center">
   <img src="assets/results_av.png" width="1000" alt="Evaluation results of different MLLMs on OmniCompass-AV">
 </p>
+
+## 📌 Citation
+
+Please consider citing our works in your paper, if our findings help your research.
+
+## 📩 Contact
+For any question about our paper or code, please email `xu-yang.liu@connect.polyu.hk`.
