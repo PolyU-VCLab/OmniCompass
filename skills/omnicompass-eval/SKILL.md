@@ -1,6 +1,6 @@
 ---
 name: omnicompass-eval
-description: Set up, run, resume, and score OmniCompass VL/AV evaluations using this repository's toolkit. Use for API or local-model evaluation requests, not model training or annotation editing.
+description: Set up, run, resume, and score OmniCompass VL/AV evaluations with the public toolkit or an available LMMS-Eval/VLMEvalKit adapter. Use for API or local-model evaluation, not model training or annotation editing.
 ---
 
 # OmniCompass evaluation
@@ -17,6 +17,9 @@ do not create a replacement runner.
 Read `README.md` and run `bash run.sh --help`. For implementation details,
 inspect `code/run_eval.py`, `code/extract_frames.py`, `code/extract_audio.py`,
 and `code/release_tools.py`.
+Record the checkout commit and local changes, or the supplied package version.
+An installed skill can be newer than the code. Check supported flags and
+adapter availability in that checkout before constructing commands.
 
 Resolve the data path, exact model ID, API endpoint or local server, track,
 tasks, reference setting, frame count or FPS, generation budget, concurrency,
@@ -117,6 +120,16 @@ but still prepares frames and enabled audio for that selection. Removing this li
 preserves the configuration. Include probe calls in the agreed budget.
 
 Use `--resume` only with matching configuration and code/media receipts.
+Record the model snapshot or provider deployment revision when available.
+If `bash run.sh --help` exposes `--model-revision`, pass that value from the
+first run onward. This records a declared version; it does not select weights
+or prove a remote provider's backend identity. Older runners lack this option.
+Record their version information separately and use a new output directory
+when the backend changes.
+Updated runners may also compare dependency versions and model identity.
+Keep the original environment for a compatible resume. If an upgrade rejects
+old results, preserve them and use a fresh directory; ask before starting
+replacement inference beyond the authorized scope.
 Do not delete predictions, change receipts, or copy subset results to bypass
 resume checks. Stagger preparation for shared media caches or use separate caches.
 Report progress from `progress.json` and `run.log`; do not invent an ETA or
@@ -131,6 +144,37 @@ Do not increase the token budget or rerun completed answers to improve scores
 without authorization for a separately recorded experiment. Preserve refusals
 and failure metadata; never invent predictions to mark a run complete.
 
+## Use a framework adapter
+
+Read this section only when the user selects LMMS-Eval or VLMEvalKit.
+Check that the chosen installation contains the OmniCompass adapter and that
+its imported files come from the intended checkout. A supplied review package
+does not establish support in the official upstream release. If the adapter
+is absent, report that requirement instead of inventing task names or replacing
+the user's chosen framework.
+
+Follow the adapter's README and CLI help in its own environment. Do not apply
+this toolkit's PyAV pin to either framework without checking its dependencies.
+Reuse verified extracted data through `OMNICOMPASS_DATA` when supported.
+It must point to the directory containing `release.json`, `questions.jsonl`,
+and `videos/`, not the TAR download directory. Preserve the selected video IDs.
+For automatic downloads, check the adapter's pinned dataset revision, shard
+sizes, cache location, and authorization before inference can trigger a transfer.
+
+Our adapted VLMEvalKit API route uses `run.py --config`; do not add `--api-mode`
+unless the installed OmniCompass adapter explicitly supports that entrypoint.
+Use each framework's documented resume/cache options, not this toolkit's
+`--resume` flag. Keep output and response-cache locations stable across restarts.
+Do not run competing writers against the same output or remove checkpoint files.
+If supported, retain `OMNICOMPASS_CHECKPOINT_BATCH_SIZE=1` for per-request LMMS
+checkpoints; larger batches can lose unfinished batch results on interruption.
+
+If a supplied launcher writes `attempts/<id>/process.json` and `acceptance.json`,
+check those files for the current attempt, its exit status, and exact request
+coverage. Otherwise check the current process and its own output files directly.
+Never accept a historical successful report as proof that a new run completed.
+Distinguish independent model inference, replay tests, and GPU tests in reports.
+
 ## Score and report
 
 Use `scores.json` and `scores.csv`. For native inference adapters, use
@@ -138,6 +182,9 @@ Use `scores.json` and `scores.csv`. For native inference adapters, use
 `--help` and the prediction schema in `code/run_eval.py` before adapting.
 Write one final row per question/setting. Do not concatenate raw retry logs.
 Single-setting runs have no CS; incomplete runs must not be reported as final.
+For a completed evaluation, check the current exit status, completion fields,
+and expected question/setting IDs together. File presence alone is insufficient.
+Keep the zero-call preparation exception above separate from completed inference.
 
 Report the exact model name, track, tasks, settings, sampling, completed/total
 requests, failures or exclusions, available task scores, and output paths.
