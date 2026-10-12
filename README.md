@@ -37,7 +37,7 @@ Lei Zhang<sup>1,2</sup>
   <img src="assets/index.png" width="1000" alt="Overall model performance on OmniCompass-VL">
 </p>
 
-OmniCompass is a holistic benchmark for omni-modal video grounding and understanding, comprising **820 videos** and built with **approximately 1,800 human annotation hours**. It covers **2 target specifications (Text and Text+Image), 2 complementary evaluation tracks (OmniCompass-VL and OmniCompass-AV), 3 core tasks (temporal grounding, spatial grounding, and video question answering), and 3 video duration categories (short, medium, and long)**. We evaluate **50 MLLMs** on both task performance and cross-specification consistency.
+OmniCompass is a holistic benchmark for omni-modal video grounding and understanding, comprising **820 videos** and built with approximately **1,800 human annotation hours**. It covers **2 target specifications** (Text and Text+Image), **2 complementary evaluation tracks** (OmniCompass-VL and OmniCompass-AV), **3 core tasks** (temporal grounding, spatial grounding, and question answering), and **3 video duration categories** (short, medium, and long). We evaluate **50 MLLMs** on both task performance and cross-specification consistency.
 
 ## 📝 Content
 
