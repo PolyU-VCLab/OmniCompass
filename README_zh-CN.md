@@ -28,6 +28,7 @@ Lei Zhang<sup>1,2</sup>
   <img src="https://img.shields.io/badge/Paper-arXiv-b31b1b.svg" alt="Paper">
   <a href="https://github.com/PolyU-VCLab/OmniCompass"><img src="https://img.shields.io/badge/Code-GitHub-D3D3D3.svg" alt="GitHub"></a>
   <a href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass"><img src="https://img.shields.io/badge/Dataset-HuggingFace-FCC624.svg" alt="Hugging Face"></a>
+  <a href="https://modelscope.cn/datasets/liuxuyang16/OmniCompass"><img src="https://img.shields.io/badge/Dataset-ModelScope-624AFF.svg" alt="ModelScope"></a>
   <a href="https://omnicompass.netlify.app/"><img src="https://img.shields.io/badge/Project-Homepage-8F1329.svg" alt="Homepage"></a>
 </p>
 
