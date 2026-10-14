@@ -25,7 +25,7 @@ Lei Zhang<sup>1,2</sup>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Paper-arXiv-b31b1b.svg" alt="Paper">
+  <a href="https://arxiv.org/pdf/2610.18829"><img src="https://img.shields.io/badge/Paper-arXiv-b31b1b.svg" alt="Paper"></a>
   <a href="https://github.com/PolyU-VCLab/OmniCompass"><img src="https://img.shields.io/badge/Code-GitHub-D3D3D3.svg" alt="GitHub"></a>
   <a href="https://huggingface.co/datasets/VCLab-PolyU/OmniCompass"><img src="https://img.shields.io/badge/Dataset-HuggingFace-FCC624.svg" alt="Hugging Face"></a>
   <a href="https://modelscope.cn/datasets/liuxuyang16/OmniCompass"><img src="https://img.shields.io/badge/Dataset-ModelScope-624AFF.svg" alt="ModelScope"></a>
@@ -287,6 +287,18 @@ bash run.sh \
 ## 📌 Citation
 
 Please consider citing our works in your paper, if our findings help your research.
+
+```bibtex
+@misc{liu2026omnicompass,
+  title = {{OmniCompass}: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding},
+  author = {Liu, Xuyang and Wang, Shihao and Wei, Xinyu and Li, Minghan and Wang, Zeqing and Yang, Zuhao and Wen, Zichen and Zhang, Lei},
+  year = {2026},
+  eprint = {2610.18829},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.CV},
+  url = {https://arxiv.org/pdf/2610.18829}
+}
+```
 
 ## 📩 Contact
 For any question about our paper or code, please email `xu-yang.liu@connect.polyu.hk`.
