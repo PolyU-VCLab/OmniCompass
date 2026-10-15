@@ -1,0 +1,18 @@
+name: OmniCompass
+description: >-
+  OmniCompass evaluates temporal grounding, spatial grounding, and video question
+  answering with paired Text and Text+Image target specifications. VL evaluates
+  general vision-language models; AV evaluates omni-modal models with full audio.
+  Each leaderboard reports Overall Cross-Specification Consistency Score (CS),
+  the unweighted mean of TG, SG, and QA CS, on a 0-100 scale (higher is better).
+  Evaluate the full track with both specifications. Report frames or FPS,
+  thinking mode, output budget, model version, and policy exclusions in notes.
+evaluation_framework: omnicompass
+
+tasks:
+  - id: omnicompass_vl
+    config: OmniCompass-VL
+    split: test
+  - id: omnicompass_av
+    config: OmniCompass-AV
+    split: test
