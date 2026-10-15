@@ -46,14 +46,10 @@ OmniCompass is a holistic benchmark for omni-modal video grounding and understan
 - [Overview](#-overview)
 - [Evaluation Pipeline](#-evaluation-pipeline)
 - [Experiments Results](#-experiments-results)
-- [Submit Results](docs/LEADERBOARD.md)
 - [Citation](#-citation)
 - [Contact](#-contact)
 
 ## 🔥 News
-
-Hugging Face benchmark registration is pending. See [Submit Results](docs/LEADERBOARD.md)
-for full-track requirements and the score exporter.
 
 * **`2026.10.06`** 🤗🤗 We release OmniCompass, a holistic benchmark for omni-modal video grounding and understanding.
 
