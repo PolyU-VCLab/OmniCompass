@@ -51,6 +51,7 @@ OmniCompass is a holistic benchmark for omni-modal video grounding and understan
 
 ## 🔥 News
 
+* **`2026.10.17`** ✅✅ We have integrated OmniCompass into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval)! You can now evaluate your models on our benchmark by following the instructions [here](https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/main/lmms_eval/tasks/omnicompass/README.md).
 * **`2026.10.06`** 🤗🤗 We release OmniCompass, a holistic benchmark for omni-modal video grounding and understanding.
 
 ## ✨ Overview
@@ -225,10 +226,7 @@ the task and CS denominators, including responses that exhaust the output budget
 The runner records them as processed and does not retry them on resume.
 Parseable answers retain their existing scores even when the response is truncated.
 Transport failures and content-policy refusals follow the existing exclusion rules.
-The 32768-token default applies to new runs. Paper experiments used different
-budgets, including 8192, 32768, and 8192 with targeted 32768-token recovery.
-To reproduce a reported result, match that experiment's model, inputs, sampling,
-generation budget, and retry policy. Keep runs with different configurations separate.
+The 32768-token default applies to new runs.
 
 Scores are saved in `scores.json` and `scores.csv`; model responses are in
 `predictions.jsonl`.

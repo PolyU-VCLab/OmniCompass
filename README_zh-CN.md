@@ -51,6 +51,7 @@ OmniCompass 是一个面向全模态视频定位与理解的综合评测基准�
 
 ## 🔥 最新动态
 
+* **`2026.10.17`** ✅✅ 我们已将 OmniCompass 集成到 [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) 框架！现在您可以按照[这里](https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/main/lmms_eval/tasks/omnicompass/README.md)的说明，在我们的基准上评测您的模型。
 * **`2026.10.06`** 🤗🤗 我们发布 OmniCompass，一个面向全模态视频定位与理解的综合评测基准。
 
 ## ✨ 概览
@@ -209,10 +210,7 @@ vLLM 的 Qwen 接口加 `--thinking-api chat_template`，DashScope 接口加
 包括耗尽输出预算的响应。这类请求计入已处理进度，续跑时不会重复调用。
 截断响应若已有可解析答案，仍按原规则评分。
 网络等请求失败和内容安全拒绝沿用既有排除规则。
-32768 是新运行的默认预算。论文实验使用过 8192、32768，
-以及 8192 后针对截断请求补到 32768 等配置。
-复现某项结果时，需匹配该实验的模型、输入、采样、生成预算和重试策略；
-不同配置的运行使用独立输出目录。
+32768 是新运行的默认预算。
 
 成绩保存在 `scores.json` 和 `scores.csv` 中，模型响应保存在 `predictions.jsonl` 中。
 评分只读取最终答案，原始输出和独立的思考内容保留在 `response_meta` 中。
