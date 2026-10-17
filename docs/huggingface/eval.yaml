@@ -7,7 +7,7 @@ description: >-
   the unweighted mean of TG, SG, and QA CS, on a 0-100 scale (higher is better).
   Evaluate the full track with both specifications. Report frames or FPS,
   thinking mode, output budget, model version, and policy exclusions in notes.
-evaluation_framework: omnicompass
+# Add evaluation_framework: omnicompass after HF deploys framework PR #2671.
 
 tasks:
   - id: omnicompass_vl

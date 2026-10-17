@@ -4,12 +4,16 @@
 
 Hugging Face benchmark registration is
 [pending](https://github.com/huggingface/huggingface.js/pull/2671).
-The [prepared configuration](huggingface/eval.yaml) defines two
+The [published dataset configuration](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass/blob/main/eval.yaml) defines two
 leaderboards: `omnicompass_vl` and `omnicompass_av`. Each reports **Overall
 Cross-Specification Consistency Score (CS)** on a **0-100** scale, higher is better.
 Overall CS is the unweighted mean of TG, SG and QA CS. Text and Text+Image must
 both be evaluated. The [project leaderboard](https://omnicompass.netlify.app/)
 continues to display the detailed paper results.
+
+The dataset-root configuration is published, but Hub leaderboard activation
+is still pending. Its optional `evaluation_framework` field is omitted until
+HF deploys the `omnicompass` registry entry.
 
 ## What to submit
 
@@ -91,7 +95,10 @@ Reference: [Hugging Face evaluation results](https://huggingface.co/docs/hub/en/
 
 ## Maintainer activation
 
-Once HF accepts the framework identifier and deploys it to the Hub, publish
-`docs/huggingface/eval.yaml` at the dataset repository root as `eval.yaml`.
-HF must also approve the Benchmark beta allow-list request. Confirm that both
-leaderboards are visible before announcing that submission is active.
+The dataset root already contains `eval.yaml`; the matching source is
+`docs/huggingface/eval.yaml`. The Hub currently accepts the configuration
+without an `evaluation_framework` value. Once HF accepts the identifier and
+deploys it, add `evaluation_framework: omnicompass` to both copies.
+HF must also approve the Benchmark beta allow-list request in PR #2671.
+Confirm that both leaderboards are visible before announcing that submission
+is active.

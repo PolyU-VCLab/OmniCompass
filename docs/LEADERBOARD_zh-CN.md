@@ -3,11 +3,15 @@
 [English](LEADERBOARD.md)
 
 Hugging Face Benchmark [注册正在申请中](https://github.com/huggingface/huggingface.js/pull/2671)。
-[预备配置](huggingface/eval.yaml)分为 `omnicompass_vl` 和
+[已发布的数据集配置](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass/blob/main/eval.yaml)分为 `omnicompass_vl` 和
 `omnicompass_av` 两个榜单，均采用 **Overall 跨指代一致性分数（CS）**，
 按 **0–100** 展示，越高越好。Overall CS 是 TG、SG、QA 三项 CS 的等权平均，
 必须同时评测 Text 与 Text+Image。[项目主页](https://omnicompass.netlify.app/)
 继续展示论文的详细成绩。
+
+数据集根目录配置已发布，Hub 排行榜仍待开通。可选的
+`evaluation_framework` 字段暂时省略，待 HF 部署 `omnicompass`
+注册项后再添加。
 
 ## 哪些成绩可以提交
 
@@ -77,6 +81,8 @@ HF 从模型仓库汇总成绩。只把成绩放进 OmniCompass 数据集仓库�
 
 ## 维护者开通步骤
 
-HF 接受框架标识并部署到 Hub 后，将 `docs/huggingface/eval.yaml`
-发布到数据集仓库根目录，文件名为 `eval.yaml`。还需获得 HF 的 Benchmark
-Beta 白名单批准。确认两个榜单均可见后，再公告成绩提交功能已启用。
+数据集根目录已包含 `eval.yaml`，对应源码为 `docs/huggingface/eval.yaml`。
+Hub 当前接受不带 `evaluation_framework` 的配置。HF 接受框架标识并部署后，
+在两份配置中添加 `evaluation_framework: omnicompass`。
+PR #2671 中的 Benchmark Beta 白名单申请仍需 HF 批准。
+确认两个榜单均可见后，再公告成绩提交功能已启用。
