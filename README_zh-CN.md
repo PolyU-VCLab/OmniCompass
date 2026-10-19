@@ -269,14 +269,11 @@ bash run.sh \
 如果我们的工作对您的研究有所帮助，欢迎在论文中引用。
 
 ```bibtex
-@misc{liu2026omnicompass,
-  title = {{OmniCompass}: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding},
-  author = {Liu, Xuyang and Wang, Shihao and Wei, Xinyu and Li, Minghan and Wang, Zeqing and Yang, Zuhao and Wen, Zichen and Zhang, Lei},
-  year = {2026},
-  eprint = {2610.18829},
-  archivePrefix = {arXiv},
-  primaryClass = {cs.CV},
-  url = {https://arxiv.org/pdf/2610.18829}
+@article{liu2026omnicompass,
+  title={OmniCompass: A Holistic Benchmark for Omni-Modal Video Grounding and Understanding},
+  author={Liu, Xuyang and Wang, Shihao and Wei, Xinyu and Li, Minghan and Wang, Zeqing and Yang, Zuhao and Wen, Zichen and Zhang, Lei},
+  journal={arXiv preprint arXiv:2610.18829},
+  year={2026}
 }
 ```
 
