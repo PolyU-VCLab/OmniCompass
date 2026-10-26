@@ -2,16 +2,17 @@
 
 [English](LEADERBOARD.md)
 
-Hugging Face Benchmark [注册正在申请中](https://github.com/huggingface/huggingface.js/pull/2671)。
-[已发布的数据集配置](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass/blob/main/eval.yaml)分为 `omnicompass_vl` 和
-`omnicompass_av` 两个榜单，均采用 **Overall 跨指代一致性分数（CS）**，
+[Hugging Face 排行榜](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass#leaderboard)已开通。
+[已发布的数据集配置](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass/blob/main/eval.yaml)分为 `OmniCompass-VL` 和
+`OmniCompass-AV` 两个榜单，均采用 **Overall 跨指代一致性分数（CS）**，
 按 **0–100** 展示，越高越好。Overall CS 是 TG、SG、QA 三项 CS 的等权平均，
 必须同时评测 Text 与 Text+Image。[项目主页](https://omnicompass.netlify.app/)
 继续展示论文的详细成绩。
 
-数据集根目录配置已发布，Hub 排行榜仍待开通。可选的
-`evaluation_framework` 字段暂时省略，待 HF 部署 `omnicompass`
-注册项后再添加。
+成绩文件须使用上述区分大小写的任务 ID。旧导出文件使用
+`omnicompass_vl` 或 `omnicompass_av` 时，只需更新 `dataset.task_id`。
+HF 当前会将 Task 菜单中的连字符显示为空格。
+关闭 **Base only** 可显示被该筛选条件排除的模型。
 
 ## 哪些成绩可以提交
 
@@ -62,7 +63,7 @@ VLMEvalKit TSV 不能直接套用。使用这两个框架时，请提供原始�
 
 ## 提交到哪里
 
-HF 开通 Benchmark 后：
+导出成绩后：
 
 1. 打开被评测模型的 Hugging Face 仓库。
 2. 添加 `.eval_results/omnicompass-vl.yaml`，AV 使用 `omnicompass-av.yaml`。
@@ -79,10 +80,10 @@ HF 从模型仓库汇总成绩。只把成绩放进 OmniCompass 数据集仓库�
 
 规则以 [HF 官方文档](https://huggingface.co/docs/hub/en/eval-results) 为准。
 
-## 维护者开通步骤
+## 维护者配置
 
 数据集根目录已包含 `eval.yaml`，对应源码为 `docs/huggingface/eval.yaml`。
 Hub 当前接受不带 `evaluation_framework` 的配置。HF 接受框架标识并部署后，
 在两份配置中添加 `evaluation_framework: omnicompass`。
-PR #2671 中的 Benchmark Beta 白名单申请仍需 HF 批准。
-确认两个榜单均可见后，再公告成绩提交功能已启用。
+HF 已于 2026 年 10 月 26 日批准 Benchmark Beta 白名单。
+PR #2671 的框架注册与排行榜开通是独立的流程。

@@ -10,9 +10,9 @@ description: >-
 # Add evaluation_framework: omnicompass after HF deploys framework PR #2671.
 
 tasks:
-  - id: omnicompass_vl
+  - id: OmniCompass-VL
     config: OmniCompass-VL
     split: test
-  - id: omnicompass_av
+  - id: OmniCompass-AV
     config: OmniCompass-AV
     split: test

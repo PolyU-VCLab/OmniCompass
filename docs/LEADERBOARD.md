@@ -2,18 +2,19 @@
 
 [中文](LEADERBOARD_zh-CN.md)
 
-Hugging Face benchmark registration is
-[pending](https://github.com/huggingface/huggingface.js/pull/2671).
+The [Hugging Face leaderboard](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass#leaderboard)
+is active.
 The [published dataset configuration](https://huggingface.co/datasets/VCLab-PolyU/OmniCompass/blob/main/eval.yaml) defines two
-leaderboards: `omnicompass_vl` and `omnicompass_av`. Each reports **Overall
+leaderboards: `OmniCompass-VL` and `OmniCompass-AV`. Each reports **Overall
 Cross-Specification Consistency Score (CS)** on a **0-100** scale, higher is better.
 Overall CS is the unweighted mean of TG, SG and QA CS. Text and Text+Image must
 both be evaluated. The [project leaderboard](https://omnicompass.netlify.app/)
 continues to display the detailed paper results.
 
-The dataset-root configuration is published, but Hub leaderboard activation
-is still pending. Its optional `evaluation_framework` field is omitted until
-HF deploys the `omnicompass` registry entry.
+Use these exact, case-sensitive task IDs in result files. Older exports using
+`omnicompass_vl` or `omnicompass_av` need only the `dataset.task_id` updated.
+HF currently displays the hyphen as a space in its Task menu.
+Turn off **Base only** to include models excluded by that filter.
 
 ## What to submit
 
@@ -73,7 +74,7 @@ Do not edit run hashes to force an export from a different code version.
 
 ## Submit to Hugging Face
 
-After HF activates the benchmark:
+Submit the exported result:
 
 1. Open the evaluated model's HF repository.
 2. Add the generated file as `.eval_results/omnicompass-vl.yaml`, or use
@@ -93,12 +94,11 @@ model's results to an unrelated open model repository.
 
 Reference: [Hugging Face evaluation results](https://huggingface.co/docs/hub/en/eval-results).
 
-## Maintainer activation
+## Maintainer configuration
 
 The dataset root already contains `eval.yaml`; the matching source is
 `docs/huggingface/eval.yaml`. The Hub currently accepts the configuration
 without an `evaluation_framework` value. Once HF accepts the identifier and
 deploys it, add `evaluation_framework: omnicompass` to both copies.
-HF must also approve the Benchmark beta allow-list request in PR #2671.
-Confirm that both leaderboards are visible before announcing that submission
-is active.
+HF approved the Benchmark beta allow-list on October 26, 2026.
+Framework registration in PR #2671 is separate from leaderboard activation.

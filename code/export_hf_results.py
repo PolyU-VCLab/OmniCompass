@@ -157,7 +157,7 @@ def build_entry(data: Path, run_dir: Path, revision: str, model_repo: str,
         "run_config_sha256": sha(run_dir / "run_config.json"),
     }
     return {
-        "dataset": {"id": DATASET, "task_id": f"omnicompass_{track.lower()}",
+        "dataset": {"id": DATASET, "task_id": f"OmniCompass-{track}",
                     "revision": revision},
         "value": round(100 * overall, 6), "date": evaluated_on,
         "source": {"url": source_url, "name": "Evaluation evidence"},

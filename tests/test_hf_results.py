@@ -104,7 +104,7 @@ class ExportTests(unittest.TestCase):
             self.configure(track)
             result = self.export()
             self.assertEqual(result["value"], 100)
-            self.assertEqual(result["dataset"]["task_id"], f"omnicompass_{track.lower()}")
+            self.assertEqual(result["dataset"]["task_id"], f"OmniCompass-{track}")
             self.assertNotIn("verifyToken", result)
             self.assertNotIn("DO-NOT-EXPORT", json.dumps(result))
             self.assertNotIn("private-endpoint", json.dumps(result))
