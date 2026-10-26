@@ -18,6 +18,11 @@ Turn off **Base only** to include models excluded by that filter.
 
 ## What to submit
 
+For the OmniCompass HF leaderboard, submit results only for models with publicly
+available weights, using their corresponding model repositories. Closed/API-only
+models, including Qwen3.8-Max, remain on the project website's full leaderboard.
+Do not create a results-only model repository to add them to the HF leaderboard.
+
 Run the complete selected track: VL has 820 videos and 4,920 paired-setting
 requests; AV has 240 videos and 1,440 requests. Include all three tasks.
 VL uses video without audio; AV uses video and complete audio.
