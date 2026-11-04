@@ -51,6 +51,7 @@ OmniCompass 是一个面向全模态视频定位与理解的综合评测基准�
 
 ## 🔥 最新动态
 
+* **`2026.11.05`** 新增 [DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017) 的64帧 VL 榜单与 Index 结果。CS：TG **14.9**、SG **12.5**、QA **56.7**、Avg **28.0**。现已评测 **57 个模型**，完整结果见[榜单](https://omnicompass.netlify.app/#leaderboard)。
 * **`2026.10.17`** ✅✅ 我们已将 OmniCompass 集成到 [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval) 框架！现在您可以按照[这里](https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/main/lmms_eval/tasks/omnicompass/README.md)的说明，在我们的基准上评测您的模型。
 * **`2026.10.06`** 🤗🤗 我们发布 OmniCompass，一个面向全模态视频定位与理解的综合评测基准。
 
