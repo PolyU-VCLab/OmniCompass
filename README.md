@@ -51,6 +51,7 @@ OmniCompass is a holistic benchmark for omni-modal video grounding and understan
 
 ## 🔥 News
 
+* **`2026.11.06`** Added [MiniCPM-V 4.7 35B-A3B](https://openbmb.cn/model/minicpm-v-4-7) to the 32-frame VL leaderboard and Index. CS: TG **17.1**, SG **9.1**, QA **52.8**, Avg **26.3**. We have now evaluated **59 models**; full results are on the [leaderboard](https://omnicompass.netlify.app/#leaderboard).
 * **`2026.11.05`** Added [DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017) to the 64-frame VL leaderboard and Index. CS: TG **14.9**, SG **12.5**, QA **56.7**, Avg **28.0**. We have now evaluated **57 models**; full results are on the [leaderboard](https://omnicompass.netlify.app/#leaderboard).
 * **`2026.10.17`** ✅✅ We have integrated OmniCompass into [LMMs-Eval](https://github.com/EvolvingLMMs-Lab/lmms-eval)! You can now evaluate your models on our benchmark by following the instructions [here](https://github.com/EvolvingLMMs-Lab/lmms-eval/blob/main/lmms_eval/tasks/omnicompass/README.md).
 * **`2026.10.06`** 🤗🤗 We release OmniCompass, a holistic benchmark for omni-modal video grounding and understanding.
