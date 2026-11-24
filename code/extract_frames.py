@@ -55,25 +55,58 @@ def positive_float(value):
     return number
 
 
-def targets(duration, nframe=None, fps=None, max_frames=10000):
+def targets(duration, fps, max_frames=10000):
     if not math.isfinite(duration) or duration <= 0:
         raise ValueError("Video duration must be finite and positive")
-    if (nframe is None) == (fps is None):
-        raise ValueError("Choose exactly one of nframe and fps")
-    if nframe is not None:
-        if isinstance(nframe, bool) or not isinstance(nframe, int) or nframe <= 0:
-            raise ValueError("nframe must be a positive integer")
-        count = nframe
-    else:
-        if not math.isfinite(fps) or fps <= 0:
-            raise ValueError("fps must be finite and positive")
-        # Decimal fractions prevent spurious extra samples at an exact endpoint.
-        count = math.ceil(Fraction(str(duration)) * Fraction(str(fps)))
+    if not math.isfinite(fps) or fps <= 0:
+        raise ValueError("fps must be finite and positive")
+    # Decimal fractions prevent spurious extra samples at an exact endpoint.
+    count = math.ceil(Fraction(str(duration)) * Fraction(str(fps)))
     if count > max_frames:
         raise ValueError(f"{count} samples exceed --max-frames {max_frames}; no silent truncation")
-    if nframe is not None:
-        return [duration * i / (count + 1) for i in range(1, count + 1)]
     return [float(Fraction(i) / Fraction(str(fps))) for i in range(count)]
+
+
+def uniform_indices(total, count):
+    if total < 1 or count < 1:
+        raise ValueError("Frame count and sampling budget must be positive")
+    if count == 1:
+        return [total // 2]
+    return [round(i * (total - 1) / (count - 1)) for i in range(count)]
+
+
+def indexed_samples(reader, count):
+    total = reader.stream.frames
+    if not total:
+        total = sum(1 for _ in reader.decoded_frames())
+        reader.container.seek(reader.stream.start_time or 0, stream=reader.stream)
+    indices = uniform_indices(total, count)
+    ordinal = 0
+    decoded = 0
+    for index, frame in enumerate(reader.decoded_frames()):
+        decoded = index + 1
+        if ordinal == count or index != indices[ordinal]:
+            continue
+        if frame.is_corrupt or frame.pts is None:
+            raise ValueError(f"Invalid decoded frame at index {index}")
+        seconds = float(frame.pts * frame.time_base) - reader.origin
+        row = {"frame_index": index, "requested_timestamp_sec": seconds, "timestamp_sec": seconds,
+               "pts": frame.pts, "time_base": str(frame.time_base), "fallback_offset_sec": 0,
+               "decode_recovery": False}
+        image = frame.to_image()
+        while ordinal < count and indices[ordinal] == index:
+            ordinal += 1
+            yield image, dict(row)
+    if decoded != total or ordinal != count:
+        raise ValueError(f"Container reports {total} frames, decoder returned {decoded}")
+
+
+def timed_samples(reader, schedule, on_error):
+    previous, last = -math.inf, None
+    for requested in schedule:
+        last = sample(reader, requested, previous, on_error, last)
+        previous = last[1]["timestamp_sec"]
+        yield last
 
 
 class VideoReader:
@@ -344,10 +377,15 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
         raise ValueError("max_side must be nonnegative and JPEG quality must be 1..100")
     if on_error not in {"nearest", "fail"} or max_frames < 1:
         raise ValueError("Invalid fallback policy or frame limit")
+    if (nframe is None) == (fps is None):
+        raise ValueError("Choose exactly one of nframe and fps")
+    if nframe is not None and (type(nframe) is not int or not 1 <= nframe <= max_frames):
+        raise ValueError(f"nframe must be a positive integer <= {max_frames}")
     source_stat = video.stat()
     source_hash = sha(video)
     identity = {
-        "protocol": PROTOCOL, "source_sha256": source_hash,
+        "protocol": PROTOCOL if fps is not None else "omnicompass-uniform-frame-index-v1",
+        "source_sha256": source_hash,
         "sampler_sha256": sha(Path(__file__)),
         "nframe": nframe, "fps": fps, "max_side": max_side,
         "jpeg_quality": jpeg_quality, "on_decode_error": on_error,
@@ -359,24 +397,24 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
     destination = root / key
     reader = VideoReader(video, source_sha256=source_hash)
     try:
-        schedule = targets(reader.duration, nframe, fps, max_frames)
+        schedule = targets(reader.duration, fps, max_frames) if fps is not None else None
+        count = len(schedule) if schedule is not None else nframe
         with cache_lock(root, key):
             if destination.exists():
                 try:
-                    manifest = check_cache(destination, identity, len(schedule))
+                    manifest = check_cache(destination, identity, count)
                 except (OSError, ValueError, KeyError, TypeError) as exc:
                     raise ValueError(f"Invalid cache {destination}: {exc}. "
                                      "Use a new cache directory or remove only this cache entry.") from exc
                 return destination, manifest, True
             stage = Path(tempfile.mkdtemp(prefix=f".{key}.", dir=root))
-            try:
+            def save_frames(samples):
                 frames = []
                 previous = -math.inf
-                previous_sample = None
-                for ordinal, requested in enumerate(schedule):
-                    image, row = sample(reader, requested, previous, on_error, previous_sample)
+                for ordinal, (image, row) in enumerate(samples):
+                    if row["timestamp_sec"] < previous:
+                        raise ValueError("Non-monotonic frame PTS")
                     previous = row["timestamp_sec"]
-                    previous_sample = (image, row)
                     image = image.convert("RGB")
                     if max_side and max(image.size) > max_side:
                         from PIL import Image
@@ -387,6 +425,28 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
                     row.update(ordinal=ordinal, path=name, width=image.width,
                                height=image.height, sha256=sha(stage / name))
                     frames.append(row)
+                return frames
+
+            try:
+                fallback_reason = None
+                if schedule is not None:
+                    frames = save_frames(timed_samples(reader, schedule, on_error))
+                else:
+                    import av
+
+                    try:
+                        if reader.packet_source is not None and on_error == "nearest":
+                            raise ValueError("Known damaged video requires PTS-based recovery")
+                        frames = save_frames(indexed_samples(reader, count))
+                    except (ValueError, av.error.InvalidDataError) as exc:
+                        if on_error == "fail":
+                            raise
+                        fallback_reason = str(exc)
+                        # Avoid seeking past the last presented frame on damaged sources.
+                        end = max(0.0, reader.duration - 0.04)
+                        times = ([end / 2] if count == 1 else
+                                 [round(i * end / (count - 1), 3) for i in range(count)])
+                        frames = save_frames(timed_samples(reader, times, on_error))
                 current = video.stat()
                 if (current.st_size, current.st_mtime_ns, current.st_ino) != (
                         source_stat.st_size, source_stat.st_mtime_ns, source_stat.st_ino):
@@ -396,6 +456,7 @@ def extract_video(video, cache_dir, *, nframe=None, fps=None, max_side=640,
                     "video": reader.info,
                     "timestamp_origin": "container_start_or_video_start_if_unavailable",
                     "frames": frames,
+                    "index_fallback_reason": fallback_reason,
                     "fallback_frames": sum(bool(f["fallback_offset_sec"]) for f in frames),
                     "duplicate_frames": len(frames) - len({f["pts"] for f in frames}),
                     "reused_previous_frames": sum(f.get("reused_previous_frame", False) for f in frames),

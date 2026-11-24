@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "code"))
-from extract_frames import sample, targets
+from extract_frames import indexed_samples, sample, targets, uniform_indices
 from omnicompass_public_adapter import evaluate_public_predictions
 from run_eval import build_content, load_predictions, parser, send_request, terminal
 
@@ -43,11 +43,26 @@ class EvaluationContractTests(unittest.TestCase):
 
     def test_exact_sampling_count_and_no_model_specific_cap(self):
         for count in (32, 64, 128, 1024):
-            schedule = targets(2400, nframe=count)
+            schedule = uniform_indices(2400, count)
             self.assertEqual(len(schedule), count)
-            self.assertEqual(schedule[0], 2400 / (count + 1))
-            self.assertEqual(schedule[-1], 2400 * count / (count + 1))
+            self.assertEqual((schedule[0], schedule[-1]), (0, 2399))
         self.assertEqual(targets(2400, fps=1), list(range(2400)))
+
+    def test_index_sampling_uses_decoded_frames_and_their_presentation_times(self):
+        reader = MagicMock(origin=1)
+        reader.stream.frames = 5
+        pts = [10, 11, 14, 22, 36]
+        reader.decoded_frames.return_value = [
+            MagicMock(pts=t, time_base=0.1, is_corrupt=False) for t in pts]
+        metadata = [r for _, r in indexed_samples(reader, 3)]
+        self.assertEqual([r["frame_index"] for r in metadata], [0, 2, 4])
+        self.assertEqual([r["pts"] for r in metadata], [10, 14, 36])
+        self.assertAlmostEqual(metadata[1]["timestamp_sec"], 0.4)
+        self.assertEqual(uniform_indices(2, 4), [0, 0, 1, 1])
+        self.assertEqual(uniform_indices(5, 1), [2])
+        reader.stream.frames = 6
+        with self.assertRaisesRegex(ValueError, "decoder returned 5"):
+            list(indexed_samples(reader, 3))
 
     def test_payload_retains_all_frames_and_actual_timestamps(self):
         with tempfile.TemporaryDirectory() as temporary:
