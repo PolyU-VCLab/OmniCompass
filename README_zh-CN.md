@@ -32,6 +32,10 @@ Lei Zhang<sup>1,2</sup>
   <a href="https://omnicompass.netlify.app/"><img src="https://img.shields.io/badge/Project-Homepage-8F1329.svg" alt="Homepage"></a>
 </p>
 
+<p align="center">
+  点击<a href="https://omnicompass.netlify.app/#leaderboard">这里</a>查看最新榜单和更多分析。<strong>我们会持续更新榜单！</strong>
+</p>
+
 </div>
 
 <p align="center">
